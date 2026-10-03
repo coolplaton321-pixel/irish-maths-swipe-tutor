@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Irish maths swipe tutor — demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#22303F;
+    --ink-soft:#5C6B7A;
+    --line:#E3E1EA;
+    --paper:#FFFFFF;
+
+    --ps:#2F6F8F;   /* Number           */
+    --pc:#2E8B77;   /* Algebra          */
+    --pp:#C98A2B;   /* Geometry         */
+    --pr:#D94F45;   /* Calculus/Stats   */
+
+    --yes:#2E8B77;
+    --no:#D2544C;
+
+    --r:22px;
+    --shadow:0 24px 70px -24px rgba(0,8,20,.82), 0 2px 12px rgba(0,8,20,.22);
+    --display:"Plus Jakarta Sans",-apple-system,"Segoe UI",Roboto,sans-serif;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:var(--sans);
+    color:var(--ink);
+    background:
+      radial-gradient(100% 80% at 12% 0%,  rgba(167,207,235,.60) 0%, rgba(167,207,235,0) 58%),
+      radial-gradient(90% 72% at 94% 12%, rgba(197,192,230,.42) 0%, rgba(197,192,230,0) 60%),
+      radial-gradient(100% 84% at 55% 100%, rgba(175,225,214,.36) 0%, rgba(175,225,214,0) 62%),
+      linear-gradient(168deg,#B5BBC0 0%,#B6BCC3 46%,#B5B8BC 100%);
+    background-attachment:fixed;
+    display:flex; flex-direction:column;
+    min-height:100dvh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- shell ---------- */
+  .top{
+    padding:22px 20px 0;
+    display:flex; align-items:center; gap:14px;
+    max-width:1240px; width:100%; margin:0 auto;
+  }
+  .rail{flex:1; height:4px; border-radius:99px; background:rgba(34,48,63,.16); overflow:hidden}
+  .rail i{display:block; height:100%; width:0%; border-radius:99px; background:var(--ink); transition:width .45s cubic-bezier(.2,.8,.2,1)}
+  .count{font-size:12px; font-variant-numeric:tabular-nums; letter-spacing:.04em; color:var(--ink-soft); white-space:nowrap}
+  .tally{display:flex; gap:8px; font-size:12px; font-weight:600; font-variant-numeric:tabular-nums}
+  .tally span{display:inline-flex; align-items:center; gap:5px; color:var(--ink-soft)}
+  .tally b{font-weight:700}
+  .pip{width:7px;height:7px;border-radius:50%}
+
+  main{
+    flex:1; display:flex; align-items:center; justify-content:center;
+    padding:14px max(24px, env(safe-area-inset-right)) 14px max(24px, env(safe-area-inset-left));
+  }
+  .workspace{
+    width:min(100%,1200px);
+    display:grid;
+    grid-template-columns:minmax(330px,400px) minmax(560px,780px);
+    gap:22px;
+    align-items:stretch;
+  }
+  .stage{position:relative; width:100%; height:min(540px,70dvh)}
+
+  /* ---------- card ---------- */
+  .card{
+    position:absolute; inset:0;
+    background:var(--paper);
+    border-radius:var(--r);
+    box-shadow:var(--shadow);
+    padding:26px 26px 22px;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    touch-action:pan-y;
+    will-change:transform;
+    border:1px solid rgba(227,225,234,.9);
+  }
+  .card::before{
+    content:""; position:absolute; left:0; right:0; top:0; height:4px;
+    background:linear-gradient(90deg,var(--ps),var(--pc),var(--pp),var(--pr));
+    opacity:.85;
+  }
+  .card.behind{pointer-events:none}
+
+  .task{
+    font-size:11px; font-weight:700; letter-spacing:.13em; text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .qno{float:right; font-variant-numeric:tabular-nums; letter-spacing:.08em; color:#B9B5C2}
+
+  .sentence{
+    position:relative;
+    margin:4px 0 0;
+    padding:20px 20px 20px 24px;
+    background:linear-gradient(180deg,#F8FAFD 0%,#F5F7FC 100%);
+    border-radius:16px;
+  }
+  .sentence::before{
+    content:""; position:absolute; left:0; top:14px; bottom:14px; width:4px;
+    border-radius:99px; background:var(--ink); opacity:.85;
+  }
+  .prompt{
+    font-family:var(--display);
+    font-size:clamp(23px,4.9vw,29px);
+    line-height:1.38;
+    margin:0;
+    font-weight:600;
+    letter-spacing:-.014em;
+    word-spacing:.08em;
+    color:#667386;
+  }
+  .prompt em{font-style:italic; color:var(--pr)}
+  .prompt b{font-weight:800; color:var(--pr)}
+  .prompt .blank{
+    display:inline-block; min-width:82px; border-bottom:3px solid #C3CEDC;
+    margin:0 3px; vertical-align:-2px;
+  }
+  .prompt .cue{
+    font-family:var(--sans); font-size:.62em; font-weight:600;
+    color:var(--ps); background:#E7EEF7; padding:3px 8px; border-radius:7px;
+    vertical-align:.14em; margin-left:2px; letter-spacing:0;
+  }
+  .math{
+    font-family:"Times New Roman","Cambria Math",Georgia,serif;
+    font-style:italic;
+    font-weight:700;
+    letter-spacing:0;
+    word-spacing:0;
+    color:#17283A;
+  }
+  .panel.answer .math{color:#3A1E1B}
+  .context{margin-top:14px; font-size:14.5px; line-height:1.55; color:var(--ink-soft)}
+
+  .scroll{flex:1; overflow-y:auto; margin:0 -6px; padding:0 6px; scrollbar-width:thin; display:flex; flex-direction:column}
+  .scroll .inner{margin-top:auto; margin-bottom:auto; width:100%}
+
+  /* hint + answer panels */
+  .panel{
+    margin-top:16px; border-radius:14px; padding:14px 16px;
+    font-size:14.5px; line-height:1.6;
+    animation:rise .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .panel h4{margin:0 0 5px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700}
+  .panel.theory{background:#EFF4FA; color:#2A4560} .panel.theory h4{color:var(--ps)}
+  .panel.example{background:#EDF6F3; color:#22503F} .panel.example h4{color:var(--pc)}
+  .panel.answer{background:#FBF0EE; color:#5B2723} .panel.answer h4{color:var(--pr)}
+  .panel.words{background:#FBF4E7; color:#4E3A15} .panel.words h4{color:var(--pp)}
+  .panel.words dl{margin:0}
+  .panel.words dt{font-weight:700; color:#2E2413; margin-top:9px}
+  .panel.words dt:first-child{margin-top:0}
+  .panel.words dd{margin:2px 0 0; line-height:1.5}
+  .panel.words .ua{display:block; font-weight:600; color:var(--pp)}
+  .panel.answer .sol{font-family:var(--display); font-weight:700; font-size:19.5px; line-height:1.42; letter-spacing:-.01em; color:#3A1E1B; display:block; margin-bottom:8px}
+  @keyframes rise{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
+
+  .tense-tag{
+    display:inline-block; margin-top:10px; padding:5px 11px; border-radius:99px;
+    font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#fff;
+  }
+
+  /* buttons inside card */
+  .tools{display:flex; gap:8px; margin-top:18px; flex-wrap:wrap}
+  .btn{
+    font:inherit; font-size:13.5px; font-weight:600;
+    border-radius:12px; padding:11px 14px; cursor:pointer;
+    border:1px solid var(--line); background:#fff; color:var(--ink);
+    transition:transform .12s ease, background .15s ease, border-color .15s ease;
+  }
+  .btn:hover{background:#FAFAFC}
+  .btn:active{transform:translateY(1px)}
+  .btn:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
+  .btn[disabled]{opacity:.42; cursor:default}
+  .btn.primary{background:var(--ink); border-color:var(--ink); color:#fff; flex:1; min-width:150px}
+  .btn.primary:hover{background:#2C3E52}
+  .btn .k{font-weight:400; color:#9AA4AF; margin-left:6px; font-size:12px}
+  .btn.primary .k{color:#93A5B6}
+
+  .verdict{display:flex; gap:10px; margin-top:16px}
+  .verdict .btn{flex:1; padding:13px 12px; font-size:14px}
+  .btn.yes{background:var(--yes); border-color:var(--yes); color:#fff}
+  .btn.no{background:#fff; border-color:#EBBFBC; color:var(--no)}
+
+  /* swipe stamps */
+  .stamp{
+    position:absolute; top:26px; padding:7px 14px; border-radius:10px;
+    font-size:13px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;
+    opacity:0; pointer-events:none; border:2.5px solid;
+  }
+  .stamp.r{right:24px; transform:rotate(11deg); color:var(--yes); border-color:var(--yes); background:rgba(46,139,119,.06)}
+  .stamp.l{left:24px;  transform:rotate(-11deg); color:var(--no);  border-color:var(--no);  background:rgba(210,84,76,.06)}
+
+  footer{
+    padding:26px 16px 30px; text-align:center;
+    font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; color:#6C7683;
+  }
+  footer b{font-weight:600; color:#4F5B69}
+
+  /* ---------- results ---------- */
+  .result{
+    position:absolute; inset:0; background:var(--paper); border-radius:var(--r);
+    box-shadow:var(--shadow); padding:30px 28px; display:flex; flex-direction:column;
+    animation:rise .35s cubic-bezier(.2,.8,.2,1); overflow-y:auto;
+  }
+  .score{font-family:var(--display); font-weight:800; font-size:58px; line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+  .score small{font-size:22px; font-weight:600; color:var(--ink-soft)}
+  .bars{margin-top:22px; display:flex; flex-direction:column; gap:13px}
+  .bar-row{display:grid; grid-template-columns:1fr auto; gap:6px; font-size:13.5px}
+  .bar-track{grid-column:1/-1; height:7px; border-radius:99px; background:#EFEEF3; overflow:hidden}
+  .bar-track i{display:block; height:100%; border-radius:99px; transition:width .8s cubic-bezier(.2,.8,.2,1)}
+  .missed{margin-top:20px; font-size:13.5px; color:var(--ink-soft); line-height:1.6}
+  .missed li{margin-bottom:6px}
+
+
+  /* ---------- mode switch ---------- */
+  .modes{
+    max-width:520px; width:100%; margin:calc(20px + env(safe-area-inset-top)) auto 0; padding:0 20px;
+    display:flex; gap:6px; justify-content:center;
+  }
+  .modes button{
+    font:inherit; font-size:13px; font-weight:600; font-family:var(--sans);
+    min-height:44px; padding:8px 18px; border-radius:99px; cursor:pointer;
+    border:1px solid transparent; background:transparent; color:var(--ink-soft);
+    transition:background .18s ease, color .18s ease;
+  }
+  .modes button.on{background:#fff; color:var(--ink); border-color:rgba(255,255,255,.72); box-shadow:0 12px 30px -18px rgba(0,8,20,.9)}
+  .modes button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
+
+  .mode-actions{
+    min-height:44px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin:8px auto 0;
+  }
+  .test-launch{
+    font:700 13px var(--sans);
+    min-height:44px;
+    border:1px solid rgba(34,48,63,.15);
+    border-radius:12px;
+    padding:10px 17px;
+    background:var(--ink);
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 14px 28px -18px rgba(0,8,20,.9);
+  }
+  .test-launch span{font-weight:500; color:#B9C5D0; margin-left:5px}
+  .test-launch:hover{background:#2C3E52}
+  .test-launch:active{transform:translateY(1px)}
+  .test-launch:focus-visible{outline:3px solid #fff; outline-offset:3px}
+  .test-launch[hidden]{display:none}
+
+  /* ---------- scratch board ---------- */
+  .board{
+    height:min(540px,70dvh);
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    border-radius:var(--r);
+    border:1px solid rgba(227,225,234,.95);
+    background:rgba(250,251,253,.95);
+    box-shadow:0 24px 70px -34px rgba(0,8,20,.7), 0 2px 12px rgba(0,8,20,.14);
+  }
+  .board-head{
+    padding:15px 16px 12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .board-title{
+    font:700 11px var(--sans);
+    letter-spacing:.13em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .board-tools{display:flex; align-items:center; justify-content:flex-end; gap:7px; flex-wrap:wrap}
+  .board-tool{
+    min-width:44px; height:44px; padding:0 12px;
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    border:1px solid var(--line); border-radius:10px;
+    background:#fff; color:var(--ink); cursor:pointer;
+    font:600 12px var(--sans);
+  }
+  .board-tool:hover{background:#F5F7FA}
+  .board-tool.active{border-color:var(--ink); box-shadow:0 0 0 2px rgba(34,48,63,.12)}
+  .board-tool:focus-visible,.board-text:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
+  .swatch{width:15px; height:15px; border-radius:50%; border:2px solid rgba(255,255,255,.9); box-shadow:0 0 0 1px rgba(34,48,63,.24)}
+  .swatch.black{background:#17283A}.swatch.red{background:#D94F45}.swatch.blue{background:#2F6F8F}
+  .board-text{
+    width:142px; height:44px; padding:0 11px;
+    border:1px solid var(--line); border-radius:10px;
+    background:#fff; color:var(--ink);
+    font:500 13px var(--sans);
+  }
+  .board-text::placeholder{color:#8C98A5}
+  .drawing-surface{
+    position:relative;
+    flex:1;
+    min-height:0;
+    margin:12px;
+    overflow:hidden;
+    border:1px solid #D6DCE5;
+    border-radius:14px;
+    background-color:#fff;
+    background-image:
+      linear-gradient(rgba(47,111,143,.075) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(47,111,143,.075) 1px, transparent 1px);
+    background-size:24px 24px;
+    overscroll-behavior:contain;
+  }
+  #scratchCanvas{
+    display:block;
+    width:100%;
+    height:100%;
+    touch-action:none;
+    cursor:crosshair;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+  }
+  .board-note{
+    position:absolute;
+    right:12px;
+    bottom:9px;
+    pointer-events:none;
+    font-size:11px;
+    color:#98A2AE;
+    background:rgba(255,255,255,.82);
+    padding:4px 7px;
+    border-radius:7px;
+  }
+
+  @media (max-width:980px){
+    main{align-items:flex-start}
+    .workspace{grid-template-columns:1fr; max-width:700px}
+    .stage{width:min(100%,440px); justify-self:center; height:min(560px,70dvh)}
+    .board{height:480px}
+  }
+
+  @media (hover:none) and (pointer:coarse){
+    .btn{min-height:44px}
+    .board-tool{font-size:13px}
+    .swatch{width:18px; height:18px}
+  }
+
+  @media (min-width:981px) and (max-width:1250px) and (orientation:landscape){
+    .modes{margin-top:calc(10px + env(safe-area-inset-top))}
+    .mode-actions{margin-top:4px; min-height:42px}
+    .top{padding-top:10px}
+    main{padding-top:10px; padding-bottom:10px}
+    .workspace{grid-template-columns:minmax(320px,360px) minmax(0,1fr); gap:18px}
+    .stage,.board{height:min(540px,68dvh)}
+    footer{padding:16px 16px calc(18px + env(safe-area-inset-bottom))}
+  }
+
+  @media (max-width:430px){
+    .card{padding:22px 20px 18px; border-radius:18px}
+    .stage{height:min(600px,74dvh)}
+    .btn.primary{min-width:100%}
+    main{padding:12px}
+    .workspace{gap:16px}
+    .board{height:430px; border-radius:18px}
+    .board-head{align-items:flex-start; flex-direction:column}
+    .board-tools{justify-content:flex-start}
+    .board-text{width:128px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms !important; transition-duration:.01ms !important}
+  }
+</style>
+</head>
+<body>
+
+<div class="modes">
+  <button data-bank="junior" class="on">Junior Cycle</button>
+  <button data-bank="leaving">Leaving Cert</button>
+</div>
+
+<div class="mode-actions">
+  <button type="button" class="test-launch" id="testButton">Test <span>15 questions</span></button>
+</div>
+
+<div class="top" id="hud">
+  <div class="count" id="count">1 / 5</div>
+  <div class="rail"><i id="rail"></i></div>
+  <div class="tally">
+    <span><i class="pip" style="background:var(--yes)"></i><b id="tYes">0</b></span>
+    <span><i class="pip" style="background:var(--no)"></i><b id="tNo">0</b></span>
+  </div>
+</div>
+
+<main>
+  <div class="workspace">
+    <div class="stage" id="stage"></div>
+    <section class="board" aria-label="Working board">
+      <div class="board-head">
+        <div class="board-title">Working board</div>
+        <div class="board-tools" role="toolbar" aria-label="Drawing tools">
+          <button type="button" class="board-tool active" data-color="#17283A" aria-label="Black pen" title="Black pen"><span class="swatch black"></span></button>
+          <button type="button" class="board-tool" data-color="#D94F45" aria-label="Red pen" title="Red pen"><span class="swatch red"></span></button>
+          <button type="button" class="board-tool" data-color="#2F6F8F" aria-label="Blue pen" title="Blue pen"><span class="swatch blue"></span></button>
+          <button type="button" class="board-tool" data-tool="eraser" aria-label="Eraser">Eraser</button>
+          <input class="board-text" id="boardText" type="text" maxlength="80" placeholder="Type text" aria-label="Text to place on board">
+          <button type="button" class="board-tool" data-tool="text" aria-label="Place text on board">Text</button>
+        </div>
+      </div>
+      <div class="drawing-surface">
+        <canvas id="scratchCanvas" tabindex="0" aria-label="Scratch board. Draw with a pointer or select Text and click to place typed text."></canvas>
+        <span class="board-note" id="boardNote">Draw, erase, or place text</span>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>Platon Tsuz <b>·</b> Maths tutor demo</footer>
+
+<script>
+/* ------------------------------------------------------------------
+   QUESTION BANK
+   Add more objects to this array - the app handles any length.
+   tense is now used as the topic key:
+   num, alg, geo, stat, func, calc
+   task is the instruction shown at the top of the card.
+-------------------------------------------------------------------*/
+const QUESTION_BANKS = {
+  junior: [
+    { task:"Junior Cycle · Surds", tense:"num",
+      prompt:"Simplify $sqrt(72)$ fully.",
+      context:"Look for the largest square factor of 72.",
+      answer:"$sqrt(72) = sqrt(36 x 2) = 6sqrt(2)$.",
+      theory:"To simplify a surd, split the number into a perfect-square factor and the remaining factor.",
+      example:"sqrt(50) = sqrt(25 x 2) = 5sqrt(2).",
+      terms:[{w:"surd", d:"an exact irrational root that cannot be simplified to an integer", ua:"exact root"},
+             {w:"square factor", d:"a factor such as 4, 9, 16, 25 or 36", ua:"perfect square"}] },
+
+    { task:"Junior Cycle · Indices & Standard Form", tense:"num",
+      prompt:"Write $(3 x 10<sup>5</sup>)(4 x 10<sup>-3</sup>)$ in standard form.",
+      context:"Multiply the numbers, add the powers, then normalise the leading value.",
+      answer:"$(3 x 4) x 10<sup>5-3</sup> = 12 x 10<sup>2</sup> = 1.2 x 10<sup>3</sup>$.",
+      theory:"When multiplying powers with the same base, add the indices. Standard form has one non-zero digit before the decimal point.",
+      example:"(2 x 10<sup>4</sup>)(5 x 10<sup>2</sup>) = 10 x 10<sup>6</sup> = 1 x 10<sup>7</sup>.",
+      terms:[{w:"index", d:"the power showing repeated multiplication", ua:"exponent"},
+             {w:"standard form", d:"a x 10 to a power, where 1 is at most a and a is less than 10", ua:"scientific notation"}] },
+
+    { task:"Junior Cycle · Compound Interest", tense:"num",
+      prompt:"$EUR 1,200$ is invested at $4%$ compound interest for $3 years$. Find its value to the nearest cent.",
+      context:"Use the multiplier 1.04 once for each year.",
+      answer:"$1200(1.04)<sup>3</sup> = 1349.8368$, so the value is $EUR 1,349.84$.",
+      theory:"Compound growth uses final value = principal x (1 + rate)<sup>time</sup>.",
+      example:"EUR 500 at 3% for 2 years gives 500(1.03)<sup>2</sup> = EUR 530.45.",
+      terms:[{w:"principal", d:"the starting amount invested", ua:"initial amount"},
+             {w:"compound interest", d:"interest that also earns interest", ua:"growth on growth"}] },
+
+    { task:"Junior Cycle · Sets", tense:"num",
+      prompt:"Of $60$ students, $32$ play football, $25$ play basketball and $12$ play both. How many play neither?",
+      context:"Subtract the overlap once when finding the union.",
+      answer:"$n(F union B) = 32 + 25 - 12 = 45$. Therefore $60 - 45 = 15$ students play neither.",
+      theory:"For two sets, n(A union B) = n(A) + n(B) - n(A intersection B).",
+      example:"If 18 study French, 14 study German and 6 study both, then 26 study at least one.",
+      terms:[{w:"intersection", d:"members that are in both sets", ua:"overlap"},
+             {w:"union", d:"members in either set or both", ua:"combined set"}] },
+
+    { task:"Junior Cycle · Factorising", tense:"alg",
+      prompt:"Factorise fully: $2x<sup>2</sup> - 5x - 3$.",
+      context:"Find factors whose outer and inner terms combine to -5x.",
+      answer:"$2x<sup>2</sup> - 5x - 3 = (2x + 1)(x - 3)$.",
+      theory:"Check a quadratic factorisation by expanding the two brackets back out.",
+      example:"2x<sup>2</sup> + 7x + 3 = (2x + 1)(x + 3).",
+      terms:[{w:"factorise", d:"rewrite an expression as multiplied factors", ua:"put into brackets"},
+             {w:"quadratic", d:"an expression whose highest power is 2", ua:"contains x squared"}] },
+
+    { task:"Junior Cycle · Quadratic Equations", tense:"alg",
+      prompt:"Solve $x<sup>2</sup> - 5x - 14 = 0$.",
+      context:"Factorise, then set each bracket equal to zero.",
+      answer:"$(x - 7)(x + 2) = 0$, so $x = 7$ or $x = -2$.",
+      theory:"If two factors multiply to zero, at least one of the factors must be zero.",
+      example:"(x - 4)(x + 3) = 0 gives x = 4 or x = -3.",
+      terms:[{w:"root", d:"an x-value that makes the quadratic equal zero", ua:"solution"},
+             {w:"zero-product rule", d:"if ab = 0, then a = 0 or b = 0", ua:"one factor is zero"}] },
+
+    { task:"Junior Cycle · Simultaneous Equations", tense:"alg",
+      prompt:"Solve: $2x + y = 11$ and $x - y = 1$.",
+      context:"Add the equations to eliminate y.",
+      answer:"Adding gives $3x = 12$, so $x = 4$. Then $4 - y = 1$, so $y = 3$.",
+      theory:"Eliminate one variable by adding or subtracting the equations, then substitute back.",
+      example:"x + y = 8 and x - y = 2 give 2x = 10, so x = 5 and y = 3.",
+      terms:[{w:"simultaneous", d:"both equations are true for the same values", ua:"solved together"},
+             {w:"eliminate", d:"remove one variable by combining equations", ua:"cancel a letter"}] },
+
+    { task:"Junior Cycle · Changing The Subject", tense:"alg",
+      prompt:"Make $b$ the subject of $A = 1/2(a + b)h$.",
+      context:"Undo the multiplication by h and by one-half before isolating b.",
+      answer:"$2A = (a + b)h$, so $2A/h = a + b$ and $b = 2A/h - a$.",
+      theory:"Changing the subject means applying inverse operations until the required variable is alone.",
+      example:"From v = u + at, subtract u and divide by a: t = (v - u)/a.",
+      terms:[{w:"subject", d:"the variable alone on one side of a formula", ua:"isolated variable"},
+             {w:"inverse operation", d:"an operation that reverses another", ua:"opposite step"}] },
+
+    { task:"Junior Cycle · Functions", tense:"func",
+      prompt:"For $f(x) = x<sup>2</sup> - 4x - 5$, find the two $x$-intercepts.",
+      context:"At an x-intercept, f(x) = 0.",
+      answer:"$x<sup>2</sup> - 4x - 5 = (x - 5)(x + 1) = 0$, so the intercepts are $(5, 0)$ and $(-1, 0)$.",
+      theory:"The x-intercepts of a graph are the roots of its equation.",
+      example:"For y = x<sup>2</sup> - 9, the x-intercepts are (-3, 0) and (3, 0).",
+      terms:[{w:"x-intercept", d:"a point where the graph crosses the x-axis", ua:"where y = 0"},
+             {w:"function", d:"a rule assigning an output to each allowed input", ua:"input-output rule"}] },
+
+    { task:"Junior Cycle · Surface Area", tense:"geo",
+      prompt:"Find the total surface area of a closed cylinder with radius $3 cm$ and height $8 cm$. Give your answer in terms of $pi$.",
+      context:"Include two circular ends and the curved surface.",
+      answer:"$2pi r<sup>2</sup> + 2pi rh = 2pi(3<sup>2</sup>) + 2pi(3)(8) = 18pi + 48pi = 66pi cm<sup>2</sup>$.",
+      theory:"A closed cylinder has two circles and one curved rectangle: 2pi r<sup>2</sup> + 2pi rh.",
+      example:"For r = 2 and h = 5, total surface area is 8pi + 20pi = 28pi.",
+      terms:[{w:"curved surface area", d:"the area around the side of a cylinder", ua:"2 pi r h"},
+             {w:"total surface area", d:"the area of every outside face", ua:"all outer surfaces"}] },
+
+    { task:"Junior Cycle · Pythagoras", tense:"geo",
+      prompt:"A ladder is $15 m$ long and its foot is $9 m$ from a wall. How high up the wall does it reach?",
+      context:"The ladder is the hypotenuse of a right-angled triangle.",
+      answer:"$h<sup>2</sup> + 9<sup>2</sup> = 15<sup>2</sup>$. Thus $h<sup>2</sup> = 144$ and $h = 12 m$.",
+      theory:"For a right-angled triangle, a<sup>2</sup> + b<sup>2</sup> = c<sup>2</sup>, where c is the hypotenuse.",
+      example:"A hypotenuse of 13 and one side of 5 give the other side sqrt(169 - 25) = 12.",
+      terms:[{w:"hypotenuse", d:"the longest side, opposite the right angle", ua:"longest side"},
+             {w:"Pythagoras", d:"the theorem a squared plus b squared equals c squared", ua:"right-triangle rule"}] },
+
+    { task:"Junior Cycle · Trigonometry", tense:"geo",
+      prompt:"In a right-angled triangle, the side opposite angle $A$ is $7 cm$ and the hypotenuse is $13 cm$. Find $A$ to one decimal place.",
+      context:"Use inverse sine because opposite and hypotenuse are known.",
+      answer:"$sin A = 7/13$, so $A = sin<sup>-1</sup>(7/13) = 32.6 degrees$ to one decimal place.",
+      theory:"SOH gives sin A = opposite/hypotenuse. Use inverse sine to recover the angle.",
+      example:"If sin B = 0.5, then B = sin<sup>-1</sup>(0.5) = 30 degrees.",
+      terms:[{w:"inverse sine", d:"the calculator operation used to find an angle from its sine", ua:"sin to the power -1"},
+             {w:"opposite", d:"the side directly across from the chosen angle", ua:"across from A"}] },
+
+    { task:"Junior Cycle · Co-ordinate Geometry", tense:"func",
+      prompt:"Find the equation of the line through $(2, 5)$ perpendicular to $y = 1/2x - 3$.",
+      context:"Perpendicular slopes multiply to -1.",
+      answer:"The perpendicular slope is $-2$. Using $y - 5 = -2(x - 2)$ gives $y = -2x + 9$.",
+      theory:"If a non-vertical line has slope m, a perpendicular line has slope -1/m.",
+      example:"A line perpendicular to slope 3 has slope -1/3.",
+      terms:[{w:"perpendicular", d:"meeting at a right angle", ua:"90 degrees"},
+             {w:"slope", d:"change in y divided by change in x", ua:"gradient"}] },
+
+    { task:"Junior Cycle · Probability", tense:"prob",
+      prompt:"Two fair coins and one fair die are used. Find the probability of getting exactly one head and an even number.",
+      context:"Use the counting principle, then count the favourable combinations.",
+      answer:"There are $4 x 6 = 24$ outcomes. Exactly one head has $2$ coin outcomes and an even die has $3$ outcomes, so $P = 6/24 = 1/4$.",
+      theory:"For independent stages, multiply the number of choices. Probability is favourable outcomes divided by total outcomes.",
+      example:"A coin and die have 2 x 6 = 12 equally likely combined outcomes.",
+      terms:[{w:"sample space", d:"the complete set of possible outcomes", ua:"all outcomes"},
+             {w:"counting principle", d:"multiply choices across successive independent stages", ua:"number of combinations"}] },
+
+    { task:"Junior Cycle · Grouped Mean", tense:"stat",
+      prompt:"Scores $0-10, 10-20, 20-30$ have frequencies $2, 5, 3$. Estimate the mean.",
+      context:"Use class midpoints 5, 15 and 25.",
+      answer:"Estimated total $= 5(2) + 15(5) + 25(3) = 160$. Total frequency $= 10$, so estimated mean $= 160/10 = 16$.",
+      theory:"For grouped data, multiply each class midpoint by its frequency, total the products, then divide by total frequency.",
+      example:"Midpoints 5 and 15 with frequencies 3 and 1 give mean (15 + 15)/4 = 7.5.",
+      terms:[{w:"class midpoint", d:"the value halfway between a class's boundaries", ua:"middle of interval"},
+             {w:"frequency", d:"how many observations are in a class", ua:"count"}] }
+  ],
+
+  leaving: [
+    { task:"Leaving Cert · Function Substitution", tense:"func",
+      prompt:"If $f(x) = 2x<sup>2</sup> - 3x + 1$, find $f(-2)$.",
+      context:"Substitute -2 carefully. The square is positive.",
+      answer:"$f(-2) = 2(-2)<sup>2</sup> - 3(-2) + 1 = 8 + 6 + 1 = 15$.",
+      theory:"Function notation asks you to put the input value everywhere x appears.",
+      example:"If g(x)=x<sup>2</sup>+4, then g(3)=9+4=13.",
+      terms:[{w:"substitute", d:"replace x with the given value", ua:"put in the number"},
+             {w:"input", d:"the value going into the function", ua:"x-value"}] },
+
+    { task:"Leaving Cert · Differentiation", tense:"calc",
+      prompt:"Differentiate $y = 5x<sup>3</sup> - 4x + 9$.",
+      context:"Use the power rule. Constants disappear.",
+      answer:"$dy/dx = 15x<sup>2</sup> - 4$.",
+      theory:"Power rule: d/dx of ax<sup>n</sup> is anx<sup>n-1</sup>. The derivative of a constant is 0.",
+      example:"d/dx of 7x<sup>2</sup> + 3x - 8 is 14x + 3.",
+      terms:[{w:"differentiate", d:"find the derivative or rate of change", ua:"find dy/dx"},
+             {w:"constant", d:"a number without x, such as 9", ua:"standalone number"}] },
+
+    { task:"Leaving Cert · Turning Points", tense:"calc",
+      prompt:"For $f(x)=x<sup>2</sup>-6x+11$, find the turning point.",
+      context:"Differentiate, set f'(x)=0, then substitute back.",
+      answer:"$f'(x)=2x-6$. Set $2x-6=0$, so $x=3$. $f(3)=9-18+11=2$. Turning point: $(3, 2)$.",
+      theory:"At a turning point, the derivative is zero. Find x first, then find y.",
+      example:"For x<sup>2</sup>-4x+7, f'(x)=2x-4, so x=2 and y=3.",
+      terms:[{w:"turning point", d:"where a curve changes direction", ua:"minimum or maximum"},
+             {w:"derivative", d:"the slope function", ua:"rate of change"}] },
+
+    { task:"Leaving Cert · Integration", tense:"calc",
+      prompt:"Integrate: $6x<sup>2</sup> - 4x + 1$",
+      context:"Add 1 to the power, then divide by the new power.",
+      answer:"Integral $= 2x<sup>3</sup> - 2x<sup>2</sup> + x + C$.",
+      theory:"For integration, x<sup>n</sup> becomes x<sup>n+1</sup>/(n+1), and add C for an indefinite integral.",
+      example:"Integral of 8x<sup>3</sup> is 2x<sup>4</sup> + C.",
+      terms:[{w:"integrate", d:"find an antiderivative", ua:"reverse differentiation"},
+             {w:"+ C", d:"constant of integration", ua:"unknown constant"}] },
+
+    { task:"Leaving Cert · Quadratic Equations", tense:"alg",
+      prompt:"Solve: $x<sup>2</sup> - 5x + 6 = 0$",
+      context:"Factorise the quadratic first.",
+      answer:"$x<sup>2</sup> - 5x + 6 = (x - 2)(x - 3)$, so $x = 2$ or $x = 3$.",
+      theory:"If two brackets multiply to zero, at least one bracket must equal zero.",
+      example:"(x - 4)(x + 1)=0 gives x=4 or x=-1.",
+      terms:[{w:"roots", d:"the x-values that make the expression zero", ua:"solutions"},
+             {w:"quadratic", d:"an expression with x squared as highest power", ua:"x squared"}] },
+
+    { task:"Leaving Cert · Simultaneous Equations", tense:"alg",
+      prompt:"Solve simultaneously: $x + y = 7$ and $x - y = 1$.",
+      context:"Add the equations to eliminate y.",
+      answer:"Adding gives $2x = 8$, so $x = 4$. Then $4 + y = 7$, so $y = 3$.",
+      theory:"In simultaneous equations, combine equations to remove one variable, then substitute back.",
+      example:"x+y=10 and x-y=2 add to 2x=12, so x=6 and y=4.",
+      terms:[{w:"eliminate", d:"remove one variable by adding or subtracting equations", ua:"remove"},
+             {w:"substitute back", d:"use one answer to find the other variable", ua:"put back in"}] },
+
+    { task:"Leaving Cert · Slope", tense:"func",
+      prompt:"Find the slope of the line through $(2, 5)$ and $(6, 13)$.",
+      context:"Use rise over run: change in y over change in x.",
+      answer:"$m = (13 - 5) / (6 - 2) = 8 / 4 = 2$.",
+      theory:"Slope m = (y<sub>2</sub> - y<sub>1</sub>) / (x<sub>2</sub> - x<sub>1</sub>).",
+      example:"Through (1, 4) and (3, 10): m = 6/2 = 3.",
+      terms:[{w:"slope", d:"how steep the line is", ua:"gradient"},
+             {w:"rise over run", d:"change in y divided by change in x", ua:"delta y / delta x"}] },
+
+    { task:"Leaving Cert · Equation Of A Line", tense:"func",
+      prompt:"Find the equation of the line with slope $3$ through $(2, 7)$.",
+      context:"Use y = mx + c and substitute the point.",
+      answer:"$y = 3x + c$. Using $(2,7)$: $7 = 6 + c$, so $c = 1$. Equation: $y = 3x + 1$.",
+      theory:"A straight line can be written as y = mx + c, where m is slope and c is y-intercept.",
+      example:"Slope 2 through (1,5): 5=2+c, c=3, so y=2x+3.",
+      terms:[{w:"y-intercept", d:"where the line crosses the y-axis", ua:"c value"},
+             {w:"slope", d:"rate of change of the line", ua:"gradient"}] },
+
+    { task:"Leaving Cert · Trig Equations", tense:"geo",
+      prompt:"Solve $sin x = 0.5$ for $0 degrees <= x <= 180 degrees$.",
+      context:"Think of the unit circle or CAST diagram.",
+      answer:"$x = 30 degrees$ or $150 degrees$.",
+      theory:"Sine is positive in Quadrants I and II. The reference angle for sin x = 0.5 is 30 degrees.",
+      example:"If sin x = 0.5 for 0 to 360 degrees, x = 30 degrees or 150 degrees.",
+      terms:[{w:"reference angle", d:"the acute angle linked to the trig value", ua:"base angle"},
+             {w:"CAST", d:"a sign diagram for trig ratios in quadrants", ua:"quadrant signs"}] },
+
+    { task:"Leaving Cert · Cosine Rule", tense:"geo",
+      prompt:"In a triangle, $a = 7$, $b = 10$ and $C = 60 degrees$. Find $c$ using the cosine rule.",
+      context:"Use c<sup>2</sup> = a<sup>2</sup> + b<sup>2</sup> - 2ab cos C.",
+      answer:"$c<sup>2</sup> = 49 + 100 - 2(7)(10)(0.5) = 79$, so $c = sqrt(79) ≈ 8.89$.",
+      theory:"The cosine rule connects three sides and the included angle.",
+      example:"If a=5, b=6, C=60 degrees, then c<sup>2</sup>=25+36-30=31.",
+      terms:[{w:"included angle", d:"the angle between the two known sides", ua:"between sides"},
+             {w:"cosine rule", d:"a rule for non-right triangles", ua:"non-right triangle rule"}] },
+
+    { task:"Leaving Cert · Basic Probability", tense:"prob",
+      prompt:"A bag has $3$ red and $5$ blue counters. One counter is picked. Find $P(red)$.",
+      context:"Favourable outcomes over total outcomes.",
+      answer:"There are $8$ counters total, with $3$ red. $P(red) = 3/8$.",
+      theory:"For equally likely choices, probability is favourable outcomes divided by total outcomes.",
+      example:"2 green out of 9 counters gives P(green)=2/9.",
+      terms:[{w:"favourable", d:"the outcomes wanted by the question", ua:"wanted outcomes"},
+             {w:"total", d:"all possible outcomes", ua:"all counters"}] },
+
+    { task:"Leaving Cert · Independent Events", tense:"prob",
+      prompt:"Events $A$ and $B$ are independent. $P(A)=0.4$ and $P(B)=0.5$. Find $P(A and B)$.",
+      context:"For independent events, multiply.",
+      answer:"$P(A and B) = P(A) x P(B) = 0.4 x 0.5 = 0.2$.",
+      theory:"Independent means one event does not change the probability of the other.",
+      example:"If P(A)=0.3 and P(B)=0.2, then P(A and B)=0.06.",
+      terms:[{w:"independent", d:"one event does not affect the other", ua:"no effect"},
+             {w:"and", d:"both events happen", ua:"intersection"}] },
+
+    { task:"Leaving Cert · Standard Deviation", tense:"stat",
+      prompt:"Find the standard deviation of $2, 4, 4, 6$. Use population formula.",
+      context:"Find the mean, squared deviations, average them, then square root.",
+      answer:"Mean $= 4$. Squared deviations: $4, 0, 0, 4$. Variance $= 8/4 = 2$, so standard deviation $= sqrt(2) ≈ 1.41$.",
+      theory:"Population standard deviation is the square root of the mean squared distance from the mean.",
+      example:"For 3, 3, 5, 5, mean=4 and standard deviation=1.",
+      terms:[{w:"variance", d:"mean of squared deviations", ua:"before square root"},
+             {w:"standard deviation", d:"a measure of spread", ua:"spread"}] },
+
+    { task:"Leaving Cert · Compound Interest", tense:"num",
+      prompt:"$EUR 2,000$ is invested at $4%$ compound interest for $3$ years. Find the value.",
+      context:"Use A = P(1+r)<sup>t</sup>.",
+      answer:"$A = 2000(1.04)<sup>3</sup> = 2000(1.124864) = EUR 2249.73$.",
+      theory:"Compound interest means interest is added each period and then earns interest too.",
+      example:"EUR 100 at 5% for 2 years: 100(1.05)<sup>2</sup> = EUR 110.25.",
+      terms:[{w:"compound", d:"interest earns interest", ua:"growth on growth"},
+             {w:"principal", d:"the starting amount", ua:"initial amount"}] },
+
+    { task:"Leaving Cert · Arithmetic Sequences", tense:"alg",
+      prompt:"An arithmetic sequence has first term $6$ and common difference $4$. Find $T<sub>20</sub>$.",
+      context:"Use T<sub>n</sub> = a + (n - 1)d.",
+      answer:"$T<sub>20</sub> = 6 + 19(4) = 82$.",
+      theory:"In an arithmetic sequence, each term changes by the same common difference.",
+      example:"a=3, d=5: T<sub>10</sub> = 3 + 9(5) = 48.",
+      terms:[{w:"common difference", d:"the amount added each time", ua:"same increase"},
+             {w:"term", d:"one value in the sequence", ua:"one item"}] }
+  ]
+};
+
+const BANK_LABELS = {
+  junior:"Junior Cycle",
+  leaving:"Leaving Cert"
+};
+let activeBank = 'junior';
+let QUESTIONS = QUESTION_BANKS[activeBank];
+
+/* Default explanations - used when a question has no theory or example of its own. */
+const THEORY = {
+  num:"Number questions reward clean setup: identify the operation, write the multiplier or fraction, then simplify.",
+  alg:"Algebra is controlled undoing. Keep both sides balanced and make each line one small step.",
+  geo:"Geometry and trigonometry are diagram-first topics. Mark the known sides, angles, and the rule that connects them.",
+  stat:"For statistics and probability, define the sample space or total first. Then calculate from the structure.",
+  prob:"For probability, define the total sample space first, then count the outcomes the question wants.",
+  func:"Functions and coordinate geometry are about substitution, rate, and shape. Label the input or points before calculating.",
+  calc:"Calculus questions usually ask for slope, rate, area, or optimisation. Start from the derivative or integral rule."
+};
+const EXAMPLE = {
+  num:"A 12% increase uses x 1.12. A 12% decrease uses x 0.88.",
+  alg:"5x - 4 = 21 -> 5x = 25 -> x = 5.",
+  geo:"Right triangle? Try Pythagoras or trigonometry. Circle question? Look for radius, diameter, arc, or tangent.",
+  stat:"Mean: total/count. Probability: favourable/total. Always check whether outcomes are equally likely.",
+  prob:"For a fair die, P(rolling a 6) = 1/6 and P(even) = 3/6 = 1/2.",
+  func:"For f(4), replace x with 4. For slope, use change in y divided by change in x.",
+  calc:"Differentiate x<sup>4</sup> to 4x<sup>3</sup>. Integrate x<sup>3</sup> to x<sup>4</sup>/4 + C."
+};
+
+const TENSES = {
+  num:{name:"Number",                 c:"var(--ps)"},
+  alg:{name:"Algebra",                c:"var(--pc)"},
+  geo:{name:"Geometry & Trig",         c:"var(--pp)"},
+  stat:{name:"Stats & Probability",    c:"var(--pr)"},
+  prob:{name:"Probability",            c:"#7C4DCC"},
+  func:{name:"Functions & Co-ordinate",c:"#6A5ACD"},
+  calc:{name:"Calculus",               c:"#2F4858"}
+};
+
+/* Formats the test sentence:
+   ______  → a proper blank line
+   $math$  → italic maths styling
+   {hint}  → a small blue cue chip
+   *word*  → bold coral, for pointing at the word under test        */
+function styleSentence(text){
+  return text
+    .replace(/\$([^$]+)\$/g, '<span class="math">$1</span>')
+    .replace(/_{2,}/g, '<span class="blank"></span>')
+    .replace(/\{([^}]+)\}/g, '<span class="cue">$1</span>')
+    .replace(/\*([^*]+)\*/g, '<b>$1</b>');
+}
+
+/* ---------------- state ---------------- */
+const stage = document.getElementById('stage');
+let idx = 0;
+const results = [];           // {q, correct}
+let topCard = null;
+let locked = false;
+
+function render(){
+  stage.innerHTML = '';
+  if (idx >= QUESTIONS.length){ showResult(); return; }
+
+  // two placeholder cards behind, for depth
+  for (let d = Math.min(2, QUESTIONS.length - idx - 1); d >= 1; d--){
+    const el = document.createElement('div');
+    el.className = 'card behind';
+    el.style.transform = `translateY(${d*10}px) scale(${1 - d*0.035})`;
+    el.style.opacity = String(1 - d*0.28);
+    stage.appendChild(el);
+  }
+
+  const q = QUESTIONS[idx];
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="stamp r">secure</div>
+    <div class="stamp l">revise</div>
+    <div class="task">${q.task}<span class="qno">${String(idx+1).padStart(2,'0')} / ${String(QUESTIONS.length).padStart(2,'0')}</span></div>
+    <div class="scroll"><div class="inner">
+      <div class="sentence"><p class="prompt">${styleSentence(q.prompt)}</p></div>
+      <div id="panels"></div>
+    </div></div>
+    <div class="tools">
+      <button class="btn" id="bTheory">Method<span class="k" aria-hidden="true">1</span></button>
+      <button class="btn" id="bExample">Example<span class="k" aria-hidden="true">2</span></button>
+      ${q.terms ? `<button class="btn" id="bWords">Key terms<span class="k" aria-hidden="true">3</span></button>` : ''}
+      <button class="btn primary" id="bAnswer">Show solution<span class="k" aria-hidden="true">space</span></button>
+    </div>
+  `;
+  stage.appendChild(card);
+  topCard = card;
+
+  const panels = card.querySelector('#panels');
+  const scroll = card.querySelector('.scroll');
+  const add = (cls, title, html) => {
+    const p = document.createElement('div');
+    p.className = 'panel ' + cls;
+    p.innerHTML = `<h4>${title}</h4>${html}`;
+    panels.appendChild(p);
+    requestAnimationFrame(()=> scroll.scrollTo({top:scroll.scrollHeight, behavior:'smooth'}));
+  };
+
+  card.querySelector('#bTheory').onclick = e => {
+    add('theory','Method', q.theory || THEORY[q.tense]); e.currentTarget.disabled = true;
+  };
+  card.querySelector('#bExample').onclick = e => {
+    add('example','Like this', q.example || EXAMPLE[q.tense]); e.currentTarget.disabled = true;
+  };
+  card.querySelector('#bWords')?.addEventListener('click', e => {
+    add('words','Key terms',
+      '<dl>' + q.terms.map(t =>
+        `<dt>${t.w}</dt><dd>${t.d}<span class="ua">${t.ua}</span></dd>`).join('') + '</dl>');
+    e.currentTarget.disabled = true;
+  });
+  card.querySelector('#bAnswer').onclick = e => {
+    const t = TENSES[q.tense];
+    add('answer','Worked solution',
+      `<span class="sol">${styleSentence(q.answer)}</span><span class="tense-tag" style="background:${t.c}">${t.name}</span>`);
+    e.currentTarget.style.display = 'none';
+    const v = document.createElement('div');
+    v.className = 'verdict';
+    v.innerHTML = `<button class="btn no" id="vNo">Needs work</button><button class="btn yes" id="vYes">Secure</button>`;
+    card.querySelector('.tools').after(v);
+    v.querySelector('#vYes').onclick = () => fly(1);
+    v.querySelector('#vNo').onclick  = () => fly(-1);
+  };
+
+  drag(card);
+  updateHud();
+}
+
+/* ---------------- swipe ---------------- */
+function drag(card){
+  let sx=0, sy=0, dx=0, dy=0, active=false;
+  const rStamp = card.querySelector('.stamp.r');
+  const lStamp = card.querySelector('.stamp.l');
+
+  card.addEventListener('pointerdown', e => {
+    if (e.target.closest('button') || locked) return;
+    active = true; sx = e.clientX; sy = e.clientY;
+    card.setPointerCapture(e.pointerId);
+    card.style.transition = 'none';
+  });
+  card.addEventListener('pointermove', e => {
+    if (!active) return;
+    dx = e.clientX - sx; dy = e.clientY - sy;
+    card.style.transform = `translate(${dx}px, ${dy*0.35}px) rotate(${dx*0.045}deg)`;
+    rStamp.style.opacity = Math.max(0, Math.min(1, dx/110));
+    lStamp.style.opacity = Math.max(0, Math.min(1, -dx/110));
+  });
+  const end = () => {
+    if (!active) return;
+    active = false;
+    card.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)';
+    if (Math.abs(dx) > 110){ fly(dx > 0 ? 1 : -1); }
+    else {
+      card.style.transform = '';
+      rStamp.style.opacity = 0; lStamp.style.opacity = 0;
+    }
+    dx = 0;
+  };
+  card.addEventListener('pointerup', end);
+  card.addEventListener('pointercancel', end);
+}
+
+function fly(dir){                       // dir: 1 = right/correct, -1 = left/missed
+  if (locked || !topCard) return;
+  locked = true;
+  const card = topCard;
+  card.querySelector(dir > 0 ? '.stamp.r' : '.stamp.l').style.opacity = 1;
+  card.style.transition = 'transform .42s cubic-bezier(.35,.1,.35,1), opacity .42s ease';
+  card.style.transform = `translate(${dir * (window.innerWidth + 260)}px, ${dir*40}px) rotate(${dir*22}deg)`;
+  card.style.opacity = '0';
+  results.push({ q: QUESTIONS[idx], correct: dir > 0 });
+  setTimeout(() => { idx++; locked = false; render(); }, 330);
+}
+
+/* ---------------- hud ---------------- */
+function updateHud(){
+  document.getElementById('count').textContent = `${Math.min(idx+1, QUESTIONS.length)} / ${QUESTIONS.length}`;
+  document.getElementById('rail').style.width  = (idx / QUESTIONS.length * 100) + '%';
+  document.getElementById('tYes').textContent  = results.filter(r=>r.correct).length;
+  document.getElementById('tNo').textContent   = results.filter(r=>!r.correct).length;
+}
+
+/* ---------------- keyboard ---------------- */
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea, [contenteditable="true"]')) return;
+  if (idx >= QUESTIONS.length || !topCard) return;
+  if (e.key === 'ArrowRight') fly(1);
+  if (e.key === 'ArrowLeft')  fly(-1);
+  if (e.key === '1') topCard.querySelector('#bTheory')?.click();
+  if (e.key === '2') topCard.querySelector('#bExample')?.click();
+  if (e.key === '3') topCard.querySelector('#bWords')?.click();
+  if (e.key === ' '){ e.preventDefault(); topCard.querySelector('#bAnswer')?.click(); }
+});
+
+/* ---------------- results ---------------- */
+function showResult(){
+  updateHud();
+  document.getElementById('rail').style.width = '100%';
+  const right = results.filter(r=>r.correct).length;
+  const byTense = {};
+  results.forEach(r => {
+    const t = r.q.tense;
+    byTense[t] = byTense[t] || {right:0, total:0};
+    byTense[t].total++; if (r.correct) byTense[t].right++;
+  });
+  const missed = results.filter(r=>!r.correct);
+
+  const box = document.createElement('div');
+  box.className = 'result';
+  box.innerHTML = `
+    <div class="task">${BANK_LABELS[activeBank]} result</div>
+    <div class="score" style="margin-top:10px">${right}<small> / ${results.length}</small></div>
+    <div class="bars">
+      ${Object.keys(byTense).map(t => {
+        const b = byTense[t], pct = Math.round(b.right/b.total*100);
+        return `<div class="bar-row">
+          <span>${TENSES[t].name}</span><span style="color:var(--ink-soft)">${b.right}/${b.total}</span>
+          <span class="bar-track"><i style="width:${pct}%;background:${TENSES[t].c}"></i></span>
+        </div>`;
+      }).join('')}
+    </div>
+    ${missed.length ? `<div class="missed"><strong style="color:var(--ink)">Add these to revision:</strong>
+      <ul>${missed.map(m=>`<li>${styleSentence(m.q.prompt)} <em style="color:${TENSES[m.q.tense].c}">— ${TENSES[m.q.tense].name}</em></li>`).join('')}</ul></div>`
+      : `<div class="missed">Clean sweep. Ready for a harder set.</div>`}
+    <div class="tools" style="margin-top:auto">
+      <button class="btn primary" id="again">Start again</button>
+    </div>
+  `;
+  stage.innerHTML = '';
+  stage.appendChild(box);
+  box.querySelector('#again').onclick = () => { idx = 0; results.length = 0; render(); };
+}
+
+/* ---------------- mode switching ---------------- */
+document.querySelectorAll('.modes button').forEach(b => b.onclick = () => {
+  activeBank = b.dataset.bank;
+  QUESTIONS = QUESTION_BANKS[activeBank];
+  idx = 0;
+  results.length = 0;
+  locked = false;
+  topCard = null;
+  document.querySelectorAll('.modes button').forEach(x => x.classList.toggle('on', x === b));
+  syncTestButton();
+  render();
+});
+
+const testButton = document.getElementById('testButton');
+
+function syncTestButton(){
+  testButton.hidden = activeBank !== 'junior';
+}
+
+testButton.addEventListener('click', () => {
+  activeBank = 'junior';
+  QUESTIONS = QUESTION_BANKS.junior;
+  idx = 0;
+  results.length = 0;
+  locked = false;
+  topCard = null;
+  document.querySelectorAll('.modes button').forEach(b => b.classList.toggle('on', b.dataset.bank === 'junior'));
+  syncTestButton();
+  render();
+});
+
+/* ---------------- working board ---------------- */
+const canvas = document.getElementById('scratchCanvas');
+const canvasWrap = canvas.parentElement;
+const boardText = document.getElementById('boardText');
+const boardNote = document.getElementById('boardNote');
+let boardContext = canvas.getContext('2d');
+let boardTool = 'pen';
+let boardColor = '#17283A';
+let drawing = false;
+let activeBoardPointer = null;
+
+const isLikelyIPad = (navigator.maxTouchPoints || 0) > 1 && /Macintosh|iPad/i.test(navigator.userAgent);
+if (isLikelyIPad) boardNote.textContent = 'Apple Pencil ready · draw, erase, or place text';
+
+function resizeBoard(){
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const ratio = Math.max(1, window.devicePixelRatio || 1);
+  const nextWidth = Math.round(rect.width * ratio);
+  const nextHeight = Math.round(rect.height * ratio);
+  if (canvas.width === nextWidth && canvas.height === nextHeight) return;
+
+  const snapshot = document.createElement('canvas');
+  snapshot.width = canvas.width || 1;
+  snapshot.height = canvas.height || 1;
+  snapshot.getContext('2d').drawImage(canvas, 0, 0);
+
+  canvas.width = nextWidth;
+  canvas.height = nextHeight;
+  boardContext = canvas.getContext('2d');
+  boardContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+  boardContext.lineCap = 'round';
+  boardContext.lineJoin = 'round';
+  if (snapshot.width > 1 && snapshot.height > 1){
+    boardContext.drawImage(snapshot, 0, 0, snapshot.width, snapshot.height, 0, 0, rect.width, rect.height);
+  }
+}
+
+function boardPoint(event){
+  const rect = canvas.getBoundingClientRect();
+  return {x:event.clientX - rect.left, y:event.clientY - rect.top};
+}
+
+function pressureWidth(event, erasing = false){
+  const pressure = event.pointerType === 'pen' && event.pressure > 0 ? event.pressure : .5;
+  return erasing ? 18 + pressure * 24 : 1.7 + pressure * 4.3;
+}
+
+function selectBoardTool(tool, button){
+  boardTool = tool;
+  document.querySelectorAll('.board-tool').forEach(b => b.classList.toggle('active', b === button));
+  canvas.style.cursor = tool === 'text' ? 'text' : tool === 'eraser' ? 'cell' : 'crosshair';
+  boardNote.textContent = tool === 'text' ? 'Click the board to place your text' : tool === 'eraser' ? 'Drag to erase' : 'Draw on the board';
+}
+
+document.querySelectorAll('.board-tool[data-color]').forEach(button => {
+  button.addEventListener('click', () => {
+    boardColor = button.dataset.color;
+    selectBoardTool('pen', button);
+  });
+});
+
+document.querySelector('.board-tool[data-tool="eraser"]').addEventListener('click', event => {
+  selectBoardTool('eraser', event.currentTarget);
+});
+
+document.querySelector('.board-tool[data-tool="text"]').addEventListener('click', event => {
+  if (!boardText.value.trim()){
+    boardText.focus();
+    boardNote.textContent = 'Type something first, then choose Text';
+    return;
+  }
+  selectBoardTool('text', event.currentTarget);
+  canvas.focus();
+});
+
+boardText.addEventListener('keydown', event => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  document.querySelector('.board-tool[data-tool="text"]').click();
+});
+
+canvas.addEventListener('pointerdown', event => {
+  if (activeBoardPointer !== null && activeBoardPointer !== event.pointerId) return;
+  event.preventDefault();
+  const point = boardPoint(event);
+  if (boardTool === 'text'){
+    const value = boardText.value.trim();
+    if (!value) return;
+    boardContext.globalCompositeOperation = 'source-over';
+    boardContext.fillStyle = boardColor;
+    boardContext.font = '600 20px Inter, sans-serif';
+    boardContext.textBaseline = 'top';
+    boardContext.fillText(value, point.x, point.y);
+    boardNote.textContent = 'Text placed — click again to repeat';
+    return;
+  }
+
+  drawing = true;
+  activeBoardPointer = event.pointerId;
+  canvas.setPointerCapture(event.pointerId);
+  boardContext.globalCompositeOperation = boardTool === 'eraser' ? 'destination-out' : 'source-over';
+  boardContext.strokeStyle = boardColor;
+  boardContext.fillStyle = boardColor;
+  boardContext.lineWidth = pressureWidth(event, boardTool === 'eraser');
+  boardContext.beginPath();
+  boardContext.moveTo(point.x, point.y);
+  boardContext.lineTo(point.x + .01, point.y + .01);
+  boardContext.stroke();
+});
+
+canvas.addEventListener('pointermove', event => {
+  if (!drawing || event.pointerId !== activeBoardPointer) return;
+  event.preventDefault();
+  const samples = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [event];
+  samples.forEach(sample => {
+    const point = boardPoint(sample);
+    boardContext.globalCompositeOperation = boardTool === 'eraser' ? 'destination-out' : 'source-over';
+    boardContext.strokeStyle = boardColor;
+    boardContext.lineWidth = pressureWidth(sample, boardTool === 'eraser');
+    boardContext.lineTo(point.x, point.y);
+    boardContext.stroke();
+    boardContext.beginPath();
+    boardContext.moveTo(point.x, point.y);
+  });
+});
+
+function stopDrawing(event){
+  if (!drawing || (event && activeBoardPointer !== null && event.pointerId !== activeBoardPointer)) return;
+  drawing = false;
+  boardContext.closePath();
+  if (event && event.pointerId !== undefined && canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  activeBoardPointer = null;
+}
+
+canvas.addEventListener('pointerup', stopDrawing);
+canvas.addEventListener('pointercancel', stopDrawing);
+canvas.addEventListener('pointerleave', event => {
+  if (event.buttons === 0) stopDrawing(event);
+});
+
+if ('ResizeObserver' in window){
+  new ResizeObserver(() => resizeBoard()).observe(canvasWrap);
+} else {
+  window.addEventListener('resize', resizeBoard);
+}
+
+syncTestButton();
+resizeBoard();
+render();
+</script>
+</body>
+</html>

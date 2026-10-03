@@ -324,21 +324,12 @@
     user-select:none;
     -webkit-touch-callout:none;
   }
-  .interaction-shield{
-    position:fixed;
-    inset:0;
-    z-index:2147483646;
-    background:transparent;
-    touch-action:none;
-    overscroll-behavior:none;
-    -webkit-user-select:none;
-    user-select:none;
-    -webkit-touch-callout:none;
-  }
-  .interaction-shield[hidden]{display:none}
   body.board-writing{
     overflow:hidden;
     overscroll-behavior:none;
+  }
+  body.board-writing, body.board-writing *{
+    touch-action:none !important;
   }
   .board-note{
     position:absolute;
@@ -431,7 +422,6 @@
   </div>
 </main>
 
-<div class="interaction-shield" id="interactionShield" hidden aria-hidden="true"></div>
 
 <footer>Platon Tsuz <b>·</b> Maths tutor demo</footer>
 
@@ -999,7 +989,6 @@ testButton.addEventListener('click', () => {
 const canvas = document.getElementById('scratchCanvas');
 const canvasWrap = canvas.parentElement;
 const boardNote = document.getElementById('boardNote');
-const interactionShield = document.getElementById('interactionShield');
 let boardContext = canvas.getContext('2d');
 let boardTool = 'pen';
 let boardColor = '#17283A';
@@ -1008,6 +997,7 @@ let activeBoardPointer = null;
 let pencilDetected = false;
 let shieldReleaseTimer = null;
 let suppressClicksUntil = 0;
+let inputLockActive = false;
 
 const isLikelyIPad = (navigator.maxTouchPoints || 0) > 1 && /Macintosh|iPad/i.test(navigator.userAgent);
 if (isLikelyIPad) boardNote.textContent = 'Apple Pencil ready · draw or erase';
@@ -1048,7 +1038,7 @@ function pressureWidth(event, erasing = false){
 
 function engageInputShield(){
   clearTimeout(shieldReleaseTimer);
-  interactionShield.hidden = false;
+  inputLockActive = true;
   document.body.classList.add('board-writing');
 }
 
@@ -1056,37 +1046,35 @@ function releaseInputShield(){
   suppressClicksUntil = performance.now() + 420;
   clearTimeout(shieldReleaseTimer);
   shieldReleaseTimer = setTimeout(() => {
-    interactionShield.hidden = true;
+    inputLockActive = false;
     document.body.classList.remove('board-writing');
-  }, 260);
+  }, 180);
 }
 
-function swallowExtraInput(event){
-  event.preventDefault();
-  event.stopPropagation();
+function blockCompetingPointer(event){
+  if (!inputLockActive) return;
+  if (activeBoardPointer !== null && event.pointerId === activeBoardPointer) return;
+  if (event.cancelable) event.preventDefault();
+  event.stopImmediatePropagation();
 }
 
-['pointerdown','pointermove','pointerup','pointercancel','touchstart','touchmove','touchend','click'].forEach(type => {
-  interactionShield.addEventListener(type, swallowExtraInput, {passive:false});
+['pointerdown','pointermove','pointerup','pointercancel'].forEach(type => {
+  document.addEventListener(type, blockCompetingPointer, {capture:true, passive:false});
 });
 
 document.addEventListener('click', event => {
-  if (interactionShield.hidden && performance.now() >= suppressClicksUntil) return;
+  if (!inputLockActive && performance.now() >= suppressClicksUntil) return;
   if (event.target === canvas) return;
   event.preventDefault();
   event.stopImmediatePropagation();
 }, true);
 
-document.addEventListener('touchmove', event => {
-  if (!interactionShield.hidden) event.preventDefault();
-}, {capture:true, passive:false});
-
 document.addEventListener('gesturestart', event => {
-  if (!interactionShield.hidden) event.preventDefault();
+  if (inputLockActive) event.preventDefault();
 }, {capture:true, passive:false});
 
 document.addEventListener('gesturechange', event => {
-  if (!interactionShield.hidden) event.preventDefault();
+  if (inputLockActive) event.preventDefault();
 }, {capture:true, passive:false});
 
 function selectBoardTool(tool, button){
@@ -1121,7 +1109,9 @@ canvas.addEventListener('pointerdown', event => {
 
   drawing = true;
   activeBoardPointer = event.pointerId;
-  canvas.setPointerCapture(event.pointerId);
+  if (typeof canvas.setPointerCapture === 'function'){
+    try { canvas.setPointerCapture(event.pointerId); } catch (_) {}
+  }
   engageInputShield();
   boardContext.globalCompositeOperation = boardTool === 'eraser' ? 'destination-out' : 'source-over';
   boardContext.strokeStyle = boardColor;
@@ -1153,7 +1143,10 @@ function stopDrawing(event){
   if (!drawing || (event && activeBoardPointer !== null && event.pointerId !== activeBoardPointer)) return;
   drawing = false;
   boardContext.closePath();
-  if (event && event.pointerId !== undefined && canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  if (event && event.pointerId !== undefined && typeof canvas.hasPointerCapture === 'function' &&
+      typeof canvas.releasePointerCapture === 'function' && canvas.hasPointerCapture(event.pointerId)){
+    try { canvas.releasePointerCapture(event.pointerId); } catch (_) {}
+  }
   activeBoardPointer = null;
   releaseInputShield();
 }

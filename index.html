@@ -389,7 +389,7 @@
 </div>
 
 <div class="mode-actions">
-  <button type="button" class="test-launch" id="testButton">Test <span>15 questions</span></button>
+  <button type="button" class="test-launch" id="testButton">Test <span id="testCount">10 questions</span></button>
 </div>
 
 <div class="top" id="hud">
@@ -481,9 +481,9 @@ const QUESTION_BANKS = {
              {w:"quadratic", d:"an expression whose highest power is 2", ua:"contains x squared"}] },
 
     { task:"Junior Cycle · Quadratic Equations", tense:"alg",
-      prompt:"Solve $x<sup>2</sup> - 5x - 14 = 0$.",
+      prompt:"Solve $x<sup>2</sup> + 5x - 14 = 0$.",
       context:"Factorise, then set each bracket equal to zero.",
-      answer:"$(x - 7)(x + 2) = 0$, so $x = 7$ or $x = -2$.",
+      answer:"$(x + 7)(x - 2) = 0$, so $x = -7$ or $x = 2$.",
       theory:"If two factors multiply to zero, at least one of the factors must be zero.",
       example:"(x - 4)(x + 3) = 0 gives x = 4 or x = -3.",
       terms:[{w:"root", d:"an x-value that makes the quadratic equal zero", ua:"solution"},
@@ -516,14 +516,14 @@ const QUESTION_BANKS = {
       terms:[{w:"x-intercept", d:"a point where the graph crosses the x-axis", ua:"where y = 0"},
              {w:"function", d:"a rule assigning an output to each allowed input", ua:"input-output rule"}] },
 
-    { task:"Junior Cycle · Surface Area", tense:"geo",
-      prompt:"Find the total surface area of a closed cylinder with radius $3 cm$ and height $8 cm$. Give your answer in terms of $pi$.",
-      context:"Include two circular ends and the curved surface.",
-      answer:"$2pi r<sup>2</sup> + 2pi rh = 2pi(3<sup>2</sup>) + 2pi(3)(8) = 18pi + 48pi = 66pi cm<sup>2</sup>$.",
-      theory:"A closed cylinder has two circles and one curved rectangle: 2pi r<sup>2</sup> + 2pi rh.",
-      example:"For r = 2 and h = 5, total surface area is 8pi + 20pi = 28pi.",
-      terms:[{w:"curved surface area", d:"the area around the side of a cylinder", ua:"2 pi r h"},
-             {w:"total surface area", d:"the area of every outside face", ua:"all outer surfaces"}] },
+    { task:"Junior Cycle · Volume", tense:"geo",
+      prompt:"A rectangular parallelepiped (cuboid) has a base measuring $12 cm$ by $5 cm$ and a volume of $360 cm<sup>3</sup>$. Find its perpendicular height.",
+      context:"Volume equals the area of the base multiplied by the perpendicular height.",
+      answer:"$360 = 12 x 5 x h = 60h$, so $h = 360/60 = 6 cm$.",
+      theory:"For a rectangular parallelepiped, $V = l x w x h$. Equivalently, volume is base area multiplied by perpendicular height.",
+      example:"A cuboid measuring 8 cm by 4 cm by 3 cm has volume 8 x 4 x 3 = 96 cm<sup>3</sup>.",
+      terms:[{w:"rectangular parallelepiped", d:"a 3D solid with six rectangular faces", ua:"cuboid"},
+             {w:"perpendicular height", d:"the distance from the base to the opposite face at a right angle", ua:"straight height"}] },
 
     { task:"Junior Cycle · Pythagoras", tense:"geo",
       prompt:"A ladder is $15 m$ long and its foot is $9 m$ from a wall. How high up the wall does it reach?",
@@ -708,6 +708,14 @@ const QUESTION_BANKS = {
              {w:"term", d:"one value in the sequence", ua:"one item"}] }
   ]
 };
+
+/* Retained for future restoration, but excluded from the active Junior Cycle test. */
+const JUNIOR_QUESTIONS_TO_ARCHIVE = new Set([5, 9, 13, 14, 15]);
+const ARCHIVED_JUNIOR_QUESTIONS = QUESTION_BANKS.junior
+  .map((question, index) => ({...question, originalNumber:index + 1}))
+  .filter(question => JUNIOR_QUESTIONS_TO_ARCHIVE.has(question.originalNumber));
+QUESTION_BANKS.junior = QUESTION_BANKS.junior
+  .filter((_, index) => !JUNIOR_QUESTIONS_TO_ARCHIVE.has(index + 1));
 
 const BANK_LABELS = {
   junior:"Junior Cycle",
@@ -968,9 +976,11 @@ document.querySelectorAll('.modes button').forEach(b => b.onclick = () => {
 });
 
 const testButton = document.getElementById('testButton');
+const testCount = document.getElementById('testCount');
 
 function syncTestButton(){
   testButton.hidden = activeBank !== 'junior';
+  testCount.textContent = `${QUESTION_BANKS.junior.length} questions`;
 }
 
 testButton.addEventListener('click', () => {

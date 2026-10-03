@@ -240,6 +240,9 @@
     display:flex;
     justify-content:center;
     align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:0 16px;
     margin:8px auto 0;
   }
   .test-launch{
@@ -248,13 +251,16 @@
     border:1px solid rgba(34,48,63,.15);
     border-radius:12px;
     padding:10px 17px;
-    background:var(--ink);
-    color:#fff;
+    background:rgba(255,255,255,.86);
+    color:var(--ink);
     cursor:pointer;
     box-shadow:0 14px 28px -18px rgba(0,8,20,.9);
   }
-  .test-launch span{font-weight:500; color:#B9C5D0; margin-left:5px}
-  .test-launch:hover{background:#2C3E52}
+  .test-launch span{font-weight:500; color:var(--ink-soft); margin-left:5px}
+  .test-launch:hover{background:#fff}
+  .test-launch.active{background:var(--ink); color:#fff}
+  .test-launch.active span{color:#B9C5D0}
+  .test-launch.active:hover{background:#2C3E52}
   .test-launch:active{transform:translateY(1px)}
   .test-launch:focus-visible{outline:3px solid #fff; outline-offset:3px}
   .test-launch[hidden]{display:none}
@@ -399,7 +405,8 @@
 </div>
 
 <div class="mode-actions">
-  <button type="button" class="test-launch" id="testButton">Test <span id="testCount">10 questions</span></button>
+  <button type="button" class="test-launch active" id="testButton" aria-pressed="true">Test <span id="testCount">10 questions</span></button>
+  <button type="button" class="test-launch" id="appliedButton" aria-pressed="false">Applied arithmetic <span id="appliedCount">10 questions</span></button>
 </div>
 
 <div class="top" id="hud">
@@ -581,6 +588,98 @@ const QUESTION_BANKS = {
              {w:"frequency", d:"how many observations are in a class", ua:"count"}] }
   ],
 
+  applied: [
+    { task:"Applied Arithmetic · VAT & Discount", tense:"num",
+      prompt:"A laptop costs $EUR 640$ before VAT. VAT is added at $23%$, then the shop gives a $10%$ discount on the VAT-inclusive price. Find the final price.",
+      context:"Use multipliers in the order the changes occur.",
+      answer:"$640 x 1.23 = 787.20$. Then $787.20 x 0.90 = EUR 708.48$.",
+      theory:"A percentage increase uses 1 plus the rate as a multiplier; a decrease uses 1 minus the rate.",
+      example:"A EUR 200 item plus 23% VAT and then 5% off costs 200 x 1.23 x 0.95 = EUR 233.70.",
+      terms:[{w:"VAT", d:"a percentage tax added to the pre-tax price", ua:"value-added tax"},
+             {w:"multiplier", d:"the decimal factor used for a percentage change", ua:"1 plus or minus the rate"}] },
+
+    { task:"Applied Arithmetic · Reverse Percentage", tense:"num",
+      prompt:"After a $12%$ increase, a bicycle costs $EUR 448$. Find its price before the increase.",
+      context:"The new price is 112% of the original price.",
+      answer:"$1.12 x original = 448$, so $original = 448/1.12 = EUR 400$.",
+      theory:"To reverse a percentage change, divide by its multiplier rather than subtracting the percentage.",
+      example:"If a price after a 20% increase is EUR 300, the original was 300/1.20 = EUR 250.",
+      terms:[{w:"reverse percentage", d:"finding the amount before a percentage change", ua:"work backwards"},
+             {w:"original amount", d:"the value before the increase or decrease", ua:"starting value"}] },
+
+    { task:"Applied Arithmetic · Depreciation", tense:"num",
+      prompt:"A car worth $EUR 24,000$ depreciates by $8%$ each year. Find its value after $3 years$, to the nearest cent.",
+      context:"Use the multiplier 0.92 once for each year.",
+      answer:"$24000(0.92)<sup>3</sup> = 18688.512$, so the car is worth $EUR 18,688.51$.",
+      theory:"Repeated depreciation is compound decrease: value = initial value x (1 - rate)<sup>time</sup>.",
+      example:"EUR 10,000 depreciating by 5% for 2 years becomes 10000(0.95)<sup>2</sup> = EUR 9,025.",
+      terms:[{w:"depreciation", d:"a decrease in value over time", ua:"loss of value"},
+             {w:"compound decrease", d:"each decrease is calculated from the latest value", ua:"repeated multiplier"}] },
+
+    { task:"Applied Arithmetic · Mark-up", tense:"num",
+      prompt:"A shop sells an item for $EUR 72$ after adding a $20%$ mark-up to its cost price. Find the cost price.",
+      context:"The selling price is 120% of the cost price.",
+      answer:"$1.20 x cost = 72$, so $cost = 72/1.20 = EUR 60$.",
+      theory:"A mark-up is an increase based on the cost price. Reverse it by dividing by the increase multiplier.",
+      example:"A selling price of EUR 99 after a 10% mark-up comes from a cost of 99/1.10 = EUR 90.",
+      terms:[{w:"mark-up", d:"the amount added to a cost price", ua:"price increase"},
+             {w:"cost price", d:"what the shop originally paid", ua:"original shop cost"}] },
+
+    { task:"Applied Arithmetic · Ratio", tense:"num",
+      prompt:"A $32 litre$ sports drink mixture contains concentrate and water in the ratio $3:5$. How many litres of each are needed?",
+      context:"There are 8 equal ratio parts altogether.",
+      answer:"$32/8 = 4$ litres per part. Concentrate: $3 x 4 = 12 L$. Water: $5 x 4 = 20 L$.",
+      theory:"Add the ratio parts, divide the total by that number, then multiply by each share.",
+      example:"In a 2:3 mixture totalling 25 L, each part is 5 L, giving 10 L and 15 L.",
+      terms:[{w:"ratio", d:"a comparison of quantities in equal parts", ua:"part-to-part comparison"},
+             {w:"ratio part", d:"one equal unit of the ratio", ua:"one share"}] },
+
+    { task:"Applied Arithmetic · Speed", tense:"num",
+      prompt:"A coach travels $180 km$ at an average speed of $72 km/h$. How long does the journey take in hours and minutes?",
+      context:"Time equals distance divided by speed.",
+      answer:"$time = 180/72 = 2.5$ hours, which is $2 hours 30 minutes$.",
+      theory:"Use distance = speed x time, and remember that 0.5 hours is 30 minutes.",
+      example:"At 80 km/h, a 120 km journey takes 120/80 = 1.5 hours = 1 hour 30 minutes.",
+      terms:[{w:"average speed", d:"total distance divided by total time", ua:"distance per hour"},
+             {w:"decimal hour", d:"a fraction of an hour written as a decimal", ua:"convert using 60 minutes"}] },
+
+    { task:"Applied Arithmetic · Best Buy", tense:"num",
+      prompt:"Pack A contains $750 g$ of cereal for $EUR 4.20$. Pack B contains $1.2 kg$ for $EUR 6.48$. Which is the better buy, and by how much per kilogram?",
+      context:"Convert both masses to kilograms and compare unit prices.",
+      answer:"Pack A: $4.20/0.75 = EUR 5.60$ per kg. Pack B: $6.48/1.2 = EUR 5.40$ per kg. Pack B is cheaper by $EUR 0.20$ per kg.",
+      theory:"A best-buy comparison uses the same unit rate for every option.",
+      example:"EUR 3.60 for 600 g is 3.60/0.6 = EUR 6 per kg.",
+      terms:[{w:"unit price", d:"the cost for one standard unit", ua:"price per kilogram"},
+             {w:"better buy", d:"the option with the lower comparable unit cost", ua:"best value"}] },
+
+    { task:"Applied Arithmetic · Currency", tense:"num",
+      prompt:"The exchange rate is $EUR 1 = GBP 0.86$. A customer needs $GBP 645$, and the agency charges a commission equal to $2%$ of the euro cost. How many euro must the customer pay?",
+      context:"First find the euro cost of the pounds, then add the commission.",
+      answer:"$645/0.86 = EUR 750$. Commission is $0.02 x 750 = EUR 15$, so the customer pays $EUR 765$.",
+      theory:"Use division when converting back through a quoted rate, then apply any fee to the stated base amount.",
+      example:"At EUR 1 = GBP 0.80, GBP 400 costs 400/0.80 = EUR 500 before fees.",
+      terms:[{w:"exchange rate", d:"the value of one currency in another currency", ua:"conversion rate"},
+             {w:"commission", d:"a fee charged for a transaction", ua:"service fee"}] },
+
+    { task:"Applied Arithmetic · Fuel Cost", tense:"num",
+      prompt:"A car uses $6.4 litres$ of fuel per $100 km$. How much will the fuel for a $375 km$ journey cost when fuel is $EUR 1.82$ per litre?",
+      context:"Find the litres used first, then multiply by the price per litre.",
+      answer:"$6.4 x 375/100 = 24$ litres. The cost is $24 x 1.82 = EUR 43.68$.",
+      theory:"A rate per 100 km must be scaled by distance/100 before calculating the cost.",
+      example:"At 5 L per 100 km, a 240 km journey uses 5 x 2.4 = 12 L.",
+      terms:[{w:"consumption rate", d:"the amount of fuel used for a stated distance", ua:"litres per 100 km"},
+             {w:"unit rate", d:"an amount measured per one stated unit", ua:"rate per litre or kilometre"}] },
+
+    { task:"Applied Arithmetic · Wages", tense:"num",
+      prompt:"A worker earns $EUR 14.80$ per hour for $35 hours$ and time-and-a-half for $6 overtime hours$. After an $18%$ deduction from gross pay, find the net pay.",
+      context:"Calculate ordinary pay and overtime pay before applying the deduction.",
+      answer:"Ordinary pay is $35 x 14.80 = EUR 518$. Overtime is $6 x (1.5 x 14.80) = EUR 133.20$. Gross pay is $EUR 651.20$, so net pay is $651.20 x 0.82 = EUR 533.98$.",
+      theory:"Time-and-a-half means 1.5 times the normal hourly rate. A deduction leaves 1 minus the deduction rate.",
+      example:"At EUR 12 per hour, 4 hours at time-and-a-half pays 4 x 18 = EUR 72.",
+      terms:[{w:"gross pay", d:"earnings before deductions", ua:"total before deductions"},
+             {w:"net pay", d:"earnings remaining after deductions", ua:"take-home pay"}] }
+  ],
+
   leaving: [
     { task:"Leaving Cert · Function Substitution", tense:"func",
       prompt:"If $f(x) = 2x<sup>2</sup> - 3x + 1$, find $f(-2)$.",
@@ -729,6 +828,7 @@ QUESTION_BANKS.junior = QUESTION_BANKS.junior
 
 const BANK_LABELS = {
   junior:"Junior Cycle",
+  applied:"Applied arithmetic",
   leaving:"Leaving Cert"
 };
 let activeBank = 'junior';
@@ -973,37 +1073,44 @@ function showResult(){
 }
 
 /* ---------------- mode switching ---------------- */
-document.querySelectorAll('.modes button').forEach(b => b.onclick = () => {
-  activeBank = b.dataset.bank;
+function selectBank(bank){
+  activeBank = bank;
   QUESTIONS = QUESTION_BANKS[activeBank];
   idx = 0;
   results.length = 0;
   locked = false;
   topCard = null;
-  document.querySelectorAll('.modes button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.modes button').forEach(button => {
+    const selectedMode = activeBank === 'applied' ? 'junior' : activeBank;
+    button.classList.toggle('on', button.dataset.bank === selectedMode);
+  });
   syncTestButton();
   render();
+}
+
+document.querySelectorAll('.modes button').forEach(button => {
+  button.onclick = () => selectBank(button.dataset.bank);
 });
 
 const testButton = document.getElementById('testButton');
 const testCount = document.getElementById('testCount');
+const appliedButton = document.getElementById('appliedButton');
+const appliedCount = document.getElementById('appliedCount');
 
 function syncTestButton(){
-  testButton.hidden = activeBank !== 'junior';
+  const juniorAreaActive = activeBank === 'junior' || activeBank === 'applied';
+  testButton.hidden = !juniorAreaActive;
+  appliedButton.hidden = !juniorAreaActive;
   testCount.textContent = `${QUESTION_BANKS.junior.length} questions`;
+  appliedCount.textContent = `${QUESTION_BANKS.applied.length} questions`;
+  testButton.classList.toggle('active', activeBank === 'junior');
+  appliedButton.classList.toggle('active', activeBank === 'applied');
+  testButton.setAttribute('aria-pressed', String(activeBank === 'junior'));
+  appliedButton.setAttribute('aria-pressed', String(activeBank === 'applied'));
 }
 
-testButton.addEventListener('click', () => {
-  activeBank = 'junior';
-  QUESTIONS = QUESTION_BANKS.junior;
-  idx = 0;
-  results.length = 0;
-  locked = false;
-  topCard = null;
-  document.querySelectorAll('.modes button').forEach(b => b.classList.toggle('on', b.dataset.bank === 'junior'));
-  syncTestButton();
-  render();
-});
+testButton.addEventListener('click', () => selectBank('junior'));
+appliedButton.addEventListener('click', () => selectBank('applied'));
 
 /* ---------------- working board ---------------- */
 const canvas = document.getElementById('scratchCanvas');

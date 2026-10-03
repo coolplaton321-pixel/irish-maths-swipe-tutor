@@ -296,16 +296,9 @@
   }
   .board-tool:hover{background:#F5F7FA}
   .board-tool.active{border-color:var(--ink); box-shadow:0 0 0 2px rgba(34,48,63,.12)}
-  .board-tool:focus-visible,.board-text:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
+  .board-tool:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
   .swatch{width:15px; height:15px; border-radius:50%; border:2px solid rgba(255,255,255,.9); box-shadow:0 0 0 1px rgba(34,48,63,.24)}
   .swatch.black{background:#17283A}.swatch.red{background:#D94F45}.swatch.blue{background:#2F6F8F}
-  .board-text{
-    width:142px; height:44px; padding:0 11px;
-    border:1px solid var(--line); border-radius:10px;
-    background:#fff; color:var(--ink);
-    font:500 13px var(--sans);
-  }
-  .board-text::placeholder{color:#8C98A5}
   .drawing-surface{
     position:relative;
     flex:1;
@@ -330,6 +323,22 @@
     -webkit-user-select:none;
     user-select:none;
     -webkit-touch-callout:none;
+  }
+  .interaction-shield{
+    position:fixed;
+    inset:0;
+    z-index:2147483646;
+    background:transparent;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+  }
+  .interaction-shield[hidden]{display:none}
+  body.board-writing{
+    overflow:hidden;
+    overscroll-behavior:none;
   }
   .board-note{
     position:absolute;
@@ -375,7 +384,6 @@
     .board{height:430px; border-radius:18px}
     .board-head{align-items:flex-start; flex-direction:column}
     .board-tools{justify-content:flex-start}
-    .board-text{width:128px}
   }
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.01ms !important; transition-duration:.01ms !important}
@@ -413,17 +421,17 @@
           <button type="button" class="board-tool" data-color="#D94F45" aria-label="Red pen" title="Red pen"><span class="swatch red"></span></button>
           <button type="button" class="board-tool" data-color="#2F6F8F" aria-label="Blue pen" title="Blue pen"><span class="swatch blue"></span></button>
           <button type="button" class="board-tool" data-tool="eraser" aria-label="Eraser">Eraser</button>
-          <input class="board-text" id="boardText" type="text" maxlength="80" placeholder="Type text" aria-label="Text to place on board">
-          <button type="button" class="board-tool" data-tool="text" aria-label="Place text on board">Text</button>
         </div>
       </div>
       <div class="drawing-surface">
-        <canvas id="scratchCanvas" tabindex="0" aria-label="Scratch board. Draw with a pointer or select Text and click to place typed text."></canvas>
-        <span class="board-note" id="boardNote">Draw, erase, or place text</span>
+        <canvas id="scratchCanvas" tabindex="0" aria-label="Scratch board. Draw with Apple Pencil or a pointer, and use the eraser tool to remove marks."></canvas>
+        <span class="board-note" id="boardNote">Draw or erase</span>
       </div>
     </section>
   </div>
 </main>
+
+<div class="interaction-shield" id="interactionShield" hidden aria-hidden="true"></div>
 
 <footer>Platon Tsuz <b>·</b> Maths tutor demo</footer>
 
@@ -843,26 +851,36 @@ function render(){
 
 /* ---------------- swipe ---------------- */
 function drag(card){
-  let sx=0, sy=0, dx=0, dy=0, active=false;
+  let sx=0, sy=0, dx=0, dy=0, active=false, pointerId=null;
   const rStamp = card.querySelector('.stamp.r');
   const lStamp = card.querySelector('.stamp.l');
 
   card.addEventListener('pointerdown', e => {
-    if (e.target.closest('button') || locked) return;
+    if (e.target.closest('button') || locked || active) return;
+    if (e.pointerType === 'touch' && !e.isPrimary) return;
     active = true; sx = e.clientX; sy = e.clientY;
+    pointerId = e.pointerId;
     card.setPointerCapture(e.pointerId);
     card.style.transition = 'none';
   });
   card.addEventListener('pointermove', e => {
-    if (!active) return;
+    if (!active || e.pointerId !== pointerId) return;
+    if (activeBoardPointer !== null){
+      active = false;
+      pointerId = null;
+      card.style.transform = '';
+      rStamp.style.opacity = 0; lStamp.style.opacity = 0;
+      return;
+    }
     dx = e.clientX - sx; dy = e.clientY - sy;
     card.style.transform = `translate(${dx}px, ${dy*0.35}px) rotate(${dx*0.045}deg)`;
     rStamp.style.opacity = Math.max(0, Math.min(1, dx/110));
     lStamp.style.opacity = Math.max(0, Math.min(1, -dx/110));
   });
-  const end = () => {
-    if (!active) return;
+  const end = e => {
+    if (!active || e.pointerId !== pointerId) return;
     active = false;
+    pointerId = null;
     card.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)';
     if (Math.abs(dx) > 110){ fly(dx > 0 ? 1 : -1); }
     else {
@@ -980,16 +998,19 @@ testButton.addEventListener('click', () => {
 /* ---------------- working board ---------------- */
 const canvas = document.getElementById('scratchCanvas');
 const canvasWrap = canvas.parentElement;
-const boardText = document.getElementById('boardText');
 const boardNote = document.getElementById('boardNote');
+const interactionShield = document.getElementById('interactionShield');
 let boardContext = canvas.getContext('2d');
 let boardTool = 'pen';
 let boardColor = '#17283A';
 let drawing = false;
 let activeBoardPointer = null;
+let pencilDetected = false;
+let shieldReleaseTimer = null;
+let suppressClicksUntil = 0;
 
 const isLikelyIPad = (navigator.maxTouchPoints || 0) > 1 && /Macintosh|iPad/i.test(navigator.userAgent);
-if (isLikelyIPad) boardNote.textContent = 'Apple Pencil ready · draw, erase, or place text';
+if (isLikelyIPad) boardNote.textContent = 'Apple Pencil ready · draw or erase';
 
 function resizeBoard(){
   const rect = canvas.getBoundingClientRect();
@@ -1025,11 +1046,54 @@ function pressureWidth(event, erasing = false){
   return erasing ? 18 + pressure * 24 : 1.7 + pressure * 4.3;
 }
 
+function engageInputShield(){
+  clearTimeout(shieldReleaseTimer);
+  interactionShield.hidden = false;
+  document.body.classList.add('board-writing');
+}
+
+function releaseInputShield(){
+  suppressClicksUntil = performance.now() + 420;
+  clearTimeout(shieldReleaseTimer);
+  shieldReleaseTimer = setTimeout(() => {
+    interactionShield.hidden = true;
+    document.body.classList.remove('board-writing');
+  }, 260);
+}
+
+function swallowExtraInput(event){
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+['pointerdown','pointermove','pointerup','pointercancel','touchstart','touchmove','touchend','click'].forEach(type => {
+  interactionShield.addEventListener(type, swallowExtraInput, {passive:false});
+});
+
+document.addEventListener('click', event => {
+  if (interactionShield.hidden && performance.now() >= suppressClicksUntil) return;
+  if (event.target === canvas) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}, true);
+
+document.addEventListener('touchmove', event => {
+  if (!interactionShield.hidden) event.preventDefault();
+}, {capture:true, passive:false});
+
+document.addEventListener('gesturestart', event => {
+  if (!interactionShield.hidden) event.preventDefault();
+}, {capture:true, passive:false});
+
+document.addEventListener('gesturechange', event => {
+  if (!interactionShield.hidden) event.preventDefault();
+}, {capture:true, passive:false});
+
 function selectBoardTool(tool, button){
   boardTool = tool;
   document.querySelectorAll('.board-tool').forEach(b => b.classList.toggle('active', b === button));
-  canvas.style.cursor = tool === 'text' ? 'text' : tool === 'eraser' ? 'cell' : 'crosshair';
-  boardNote.textContent = tool === 'text' ? 'Click the board to place your text' : tool === 'eraser' ? 'Drag to erase' : 'Draw on the board';
+  canvas.style.cursor = tool === 'eraser' ? 'cell' : 'crosshair';
+  boardNote.textContent = tool === 'eraser' ? 'Drag to erase' : 'Draw on the board';
 }
 
 document.querySelectorAll('.board-tool[data-color]').forEach(button => {
@@ -1043,41 +1107,22 @@ document.querySelector('.board-tool[data-tool="eraser"]').addEventListener('clic
   selectBoardTool('eraser', event.currentTarget);
 });
 
-document.querySelector('.board-tool[data-tool="text"]').addEventListener('click', event => {
-  if (!boardText.value.trim()){
-    boardText.focus();
-    boardNote.textContent = 'Type something first, then choose Text';
-    return;
-  }
-  selectBoardTool('text', event.currentTarget);
-  canvas.focus();
-});
-
-boardText.addEventListener('keydown', event => {
-  if (event.key !== 'Enter') return;
-  event.preventDefault();
-  document.querySelector('.board-tool[data-tool="text"]').click();
-});
-
 canvas.addEventListener('pointerdown', event => {
   if (activeBoardPointer !== null && activeBoardPointer !== event.pointerId) return;
   event.preventDefault();
   const point = boardPoint(event);
-  if (boardTool === 'text'){
-    const value = boardText.value.trim();
-    if (!value) return;
-    boardContext.globalCompositeOperation = 'source-over';
-    boardContext.fillStyle = boardColor;
-    boardContext.font = '600 20px Inter, sans-serif';
-    boardContext.textBaseline = 'top';
-    boardContext.fillText(value, point.x, point.y);
-    boardNote.textContent = 'Text placed — click again to repeat';
+  if (event.pointerType === 'pen'){
+    pencilDetected = true;
+    boardNote.textContent = 'Pencil-only drawing active · palm touches are blocked';
+  } else if (pencilDetected && event.pointerType === 'touch'){
+    boardNote.textContent = 'Use Apple Pencil to draw · fingers still operate the controls';
     return;
   }
 
   drawing = true;
   activeBoardPointer = event.pointerId;
   canvas.setPointerCapture(event.pointerId);
+  engageInputShield();
   boardContext.globalCompositeOperation = boardTool === 'eraser' ? 'destination-out' : 'source-over';
   boardContext.strokeStyle = boardColor;
   boardContext.fillStyle = boardColor;
@@ -1110,12 +1155,23 @@ function stopDrawing(event){
   boardContext.closePath();
   if (event && event.pointerId !== undefined && canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
   activeBoardPointer = null;
+  releaseInputShield();
 }
 
 canvas.addEventListener('pointerup', stopDrawing);
 canvas.addEventListener('pointercancel', stopDrawing);
 canvas.addEventListener('pointerleave', event => {
   if (event.buttons === 0) stopDrawing(event);
+});
+canvas.addEventListener('lostpointercapture', event => {
+  if (drawing && event.pointerId === activeBoardPointer) stopDrawing(event);
+});
+
+window.addEventListener('blur', () => {
+  if (!drawing) return;
+  drawing = false;
+  activeBoardPointer = null;
+  releaseInputShield();
 });
 
 if ('ResizeObserver' in window){

@@ -9,7 +9,8 @@ An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certifica
 - Worked methods, examples, key terms, and solutions
 - Apple Pencil-ready working board
 - Pressure-sensitive black, red, and blue pens
-- Eraser and click-to-place text
+- Single-input Pencil lock that blocks palm and extra-finger touches while writing
+- Eraser for correcting work
 - Responsive landscape and portrait layouts
 
 The application is a self-contained static website. Open `index.html` locally or serve it with GitHub Pages.

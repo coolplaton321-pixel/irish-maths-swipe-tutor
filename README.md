@@ -4,7 +4,7 @@ An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certifica
 
 ## Features
 
-- Fifteen-question Higher Level Junior Cycle test
+- Ten-question Higher Level Junior Cycle test, with five earlier questions archived for future restoration
 - Swipe-based self-assessment cards
 - Worked methods, examples, key terms, and solutions
 - Apple Pencil-ready working board

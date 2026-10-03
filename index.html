@@ -286,7 +286,10 @@
     color:var(--ink-soft);
     white-space:nowrap;
   }
-  .board-tools{display:flex; align-items:center; justify-content:flex-end; gap:7px; flex-wrap:wrap}
+  .board-tools{
+    display:flex; align-items:center; justify-content:flex-end; gap:7px; flex-wrap:wrap;
+    -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+  }
   .board-tool{
     min-width:44px; height:44px; padding:0 12px;
     display:inline-flex; align-items:center; justify-content:center; gap:7px;
@@ -299,6 +302,13 @@
   .board-tool:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
   .swatch{width:15px; height:15px; border-radius:50%; border:2px solid rgba(255,255,255,.9); box-shadow:0 0 0 1px rgba(34,48,63,.24)}
   .swatch.black{background:#17283A}.swatch.red{background:#D94F45}.swatch.blue{background:#2F6F8F}
+  .eraser-icon{
+    width:19px; height:13px; display:block; pointer-events:none;
+    border:1px solid #718096; border-radius:3px;
+    background:linear-gradient(90deg,#F29A9A 0 48%,#EEF1F5 48% 100%);
+    transform:rotate(-34deg);
+    box-shadow:0 1px 1px rgba(34,48,63,.12);
+  }
   .drawing-surface{
     position:relative;
     flex:1;
@@ -411,7 +421,7 @@
           <button type="button" class="board-tool active" data-color="#17283A" aria-label="Black pen" title="Black pen"><span class="swatch black"></span></button>
           <button type="button" class="board-tool" data-color="#D94F45" aria-label="Red pen" title="Red pen"><span class="swatch red"></span></button>
           <button type="button" class="board-tool" data-color="#2F6F8F" aria-label="Blue pen" title="Blue pen"><span class="swatch blue"></span></button>
-          <button type="button" class="board-tool" data-tool="eraser" aria-label="Eraser">Eraser</button>
+          <button type="button" class="board-tool" data-tool="eraser" aria-label="Eraser" title="Eraser"><span class="eraser-icon" aria-hidden="true"></span></button>
         </div>
       </div>
       <div class="drawing-surface">

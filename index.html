@@ -32,6 +32,7 @@
   html,body{height:100%}
   body{
     margin:0;
+    height:auto;
     font-family:var(--sans);
     color:var(--ink);
     background:
@@ -395,9 +396,83 @@
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.01ms !important; transition-duration:.01ms !important}
   }
+  [hidden]{display:none !important}
+  .grinds-view{flex:1;display:flex;flex-direction:column}
+  button{ -webkit-tap-highlight-color:transparent }
+  .app-menu{position:fixed;left:max(20px,env(safe-area-inset-left));top:calc(20px + env(safe-area-inset-top));z-index:20}
+  .menu-toggle{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 15px;border:1px solid rgba(255,255,255,.8);border-radius:14px;background:rgba(255,255,255,.92);color:var(--ink);font:600 13px var(--sans);cursor:pointer;box-shadow:0 6px 24px rgba(34,48,63,.08)}
+  .menu-toggle svg{width:18px;height:18px}
+  .menu-panel{width:200px;margin-top:8px;padding:6px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 12px 35px rgba(34,48,63,.18)}
+  .menu-panel button{width:100%;display:flex;align-items:center;gap:12px;padding:14px;border:0;border-radius:10px;background:transparent;color:var(--ink);font:600 14px var(--sans);text-align:left;cursor:pointer}
+  .menu-panel button:hover,.menu-panel button[aria-current="page"]{background:#EFF4F6}
+  .menu-panel span{font-size:19px}
+  .students-view{flex:1;width:min(1280px,100%);margin:0 auto;padding:110px 28px 32px}
+  .page-eyebrow{font:700 11px var(--sans);letter-spacing:.15em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 12px}
+  .students-view h1{font:800 clamp(28px,4vw,40px) var(--display);letter-spacing:-.04em;margin:0 0 10px}
+  .page-intro{color:var(--ink-soft);font-size:14px;line-height:1.65;margin:0}
+  .student-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:30px}
+  .student-card{display:flex;gap:16px;align-items:center;padding:24px;border:1px solid rgba(255,255,255,.8);border-radius:20px;background:rgba(255,255,255,.9);color:var(--ink);text-align:left;font:inherit;box-shadow:0 8px 24px rgba(34,48,63,.06);cursor:pointer}
+  .student-card:hover:not(:disabled){background:#fff;transform:translateY(-2px)}
+  .student-card:disabled{cursor:default;opacity:.65}
+  .student-avatar{display:grid;place-items:center;width:48px;height:48px;flex-shrink:0;border-radius:15px;background:#E5EFF1;color:#2F6F8F;font:700 19px var(--display)}
+  .student-card strong{display:block;font:700 17px var(--display);margin-bottom:6px}
+  .student-card small{display:block;color:var(--ink-soft);font-size:12px;line-height:1.5}
+  .student-arrow{margin-left:auto;font-size:22px;color:#6D8490}
+  .back-students{border:0;background:transparent;padding:0 0 20px;color:var(--ink-soft);font:600 13px var(--sans);cursor:pointer}
+  .student-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px}
+  .exam-tag{display:inline-block;margin-top:10px;padding:7px 12px;border-radius:99px;background:rgba(255,255,255,.8);font:600 12px var(--sans)}
+  .progress-summary{display:flex;gap:24px;padding:18px 24px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.6);border-radius:18px;white-space:nowrap}
+  .progress-summary strong{display:block;font:800 25px var(--display)}
+  .progress-summary span{display:block;font-size:11px;color:var(--ink-soft);margin-top:5px}
+  .board-legend{display:flex;align-items:center;flex-wrap:wrap;gap:16px;padding:0 0 20px;font-size:12px;color:var(--ink-soft)}
+  .board-legend span{display:inline-flex;align-items:center;gap:7px}
+  .save-status{margin-left:auto;font-size:11px}
+  .topic-dot{display:inline-block;width:11px;height:11px;border-radius:50%;flex-shrink:0;background:#A8B2BC;box-shadow:0 0 0 3px rgba(168,178,188,.12)}
+  .topic-dot[data-rating="red"]{background:#D95450;box-shadow:0 0 0 3px rgba(217,84,80,.1)}
+  .topic-dot[data-rating="yellow"]{background:#D9A829;box-shadow:0 0 0 3px rgba(217,168,41,.13)}
+  .topic-dot[data-rating="green"]{background:#2E8B77;box-shadow:0 0 0 3px rgba(46,139,119,.1)}
+  .topic-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:start}
+  .topic-column{border:1px solid rgba(255,255,255,.9);border-radius:20px;background:rgba(255,255,255,.94);overflow:hidden;box-shadow:0 8px 28px rgba(34,48,63,.07)}
+  .topic-column header{padding:22px 20px 18px;min-height:118px;border-bottom:1px solid #E9EDF0;border-top:4px solid var(--strand-color)}
+  .topic-column header small{font:700 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--strand-color)}
+  .topic-column h2{font:700 16px/1.5 var(--display);margin:8px 0 0;letter-spacing:-.02em}
+  .topic-list{padding:6px 10px 12px}
+  .topic-row{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;border:0;border-bottom:1px solid #EFF1F4;padding:12px 10px;background:transparent;color:var(--ink);font:500 12px/1.5 var(--sans);text-align:left;cursor:pointer}
+  .topic-row:last-child{border-bottom:0}
+  .topic-row:hover{background:#F3F6F8;border-radius:10px}
+  .topic-row .topic-dot{width:9px;height:9px}
+  .topic-row .row-chevron{margin-left:auto;color:#A8B2BC;font-size:17px}
+  .curriculum-note{font-size:11px;line-height:1.7;color:var(--ink-soft);margin:22px 0 0}
+  .curriculum-note a{color:inherit}
+  .topic-dialog{width:min(520px,calc(100% - 32px));max-height:85dvh;border:1px solid #E3E8ED;border-radius:24px;padding:30px;color:var(--ink);background:#fff;box-shadow:0 24px 80px rgba(20,40,50,.25)}
+  .topic-dialog::backdrop{background:rgba(28,42,54,.4);backdrop-filter:blur(5px)}
+  .dialog-close{position:absolute;right:16px;top:16px;width:36px;height:36px;border:0;border-radius:50%;background:#F0F3F5;color:var(--ink);font-size:23px;cursor:pointer}
+  .topic-dialog h2{font:800 25px/1.35 var(--display);letter-spacing:-.03em;margin:12px 30px 16px 0}
+  .topic-description{font-size:14px;line-height:1.8;color:var(--ink-soft)}
+  .topic-dialog h3{font:700 13px var(--sans);margin:25px 0 12px}
+  .rating-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .rating-option{display:flex;align-items:center;gap:10px;min-height:55px;padding:12px;border:1px solid #E0E6EB;border-radius:12px;background:white;color:var(--ink);font:600 12px var(--sans);cursor:pointer}
+  .rating-option[aria-checked="true"]{border-color:var(--ink);background:#F1F5F7;box-shadow:0 0 0 1px var(--ink)}
+  .topic-dialog .dialog-save{width:100%;min-height:44px;border:0;border-radius:12px;margin-top:22px;background:var(--ink);color:white;font:600 13px var(--sans);cursor:pointer}
+  .storage-message{font-size:11px;color:var(--ink-soft);line-height:1.6;margin-bottom:0}
+  :is(.menu-toggle,.menu-panel button,.student-card,.back-students,.topic-row,.rating-option,.dialog-close,.dialog-save):focus-visible{outline:3px solid #2F6F8F;outline-offset:3px}
+  @media(max-width:1000px){.topic-board{grid-template-columns:repeat(2,minmax(0,1fr))}.student-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:600px){.students-view{padding:90px 16px 24px}.student-heading{align-items:flex-start;flex-direction:column}.progress-summary{width:100%;justify-content:space-between}.student-list,.topic-board{grid-template-columns:1fr}.topic-column header{min-height:0}.save-status{width:100%;margin-left:0}.app-menu{left:12px;top:12px}.grinds-view .modes{margin-top:72px}.topic-dialog{padding:24px}.student-card{padding:20px}}
 </style>
 </head>
 <body>
+
+<nav class="app-menu" aria-label="Main navigation">
+  <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="menuPanel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Menu
+  </button>
+  <div class="menu-panel" id="menuPanel" hidden>
+    <button type="button" id="studentsNav"><span aria-hidden="true">◉</span> Students</button>
+    <button type="button" id="grindsNav" aria-current="page"><span aria-hidden="true">✎</span> Grinds</button>
+  </div>
+</nav>
+
+<div class="grinds-view" id="grindsView">
 
 <div class="modes">
   <button data-bank="junior" class="on">Junior Cycle</button>
@@ -438,6 +513,42 @@
     </section>
   </div>
 </main>
+</div>
+
+<section class="students-view" id="studentsView" aria-labelledby="studentsTitle" hidden>
+  <div id="studentDirectory">
+    <p class="page-eyebrow">Your teaching space</p>
+    <h1 id="studentsTitle">Students</h1>
+    <p class="page-intro">A clear picture of what each student knows, and what comes next.</p>
+    <div class="student-list" id="studentList"></div>
+  </div>
+  <div id="jayBoard" hidden>
+    <button type="button" class="back-students" id="backStudents">← All students</button>
+    <div class="student-heading">
+      <div><p class="page-eyebrow">Student topic board</p><h1 id="jayTitle">Jay</h1><p class="page-intro">Third year · preparing for the Junior Cycle exam</p><span class="exam-tag">Junior Cycle · Higher Level</span></div>
+      <div class="progress-summary" aria-label="Topic progress" aria-live="polite"><div><strong id="topicTotal">0</strong><span>Topics</span></div><div><strong id="topicAssessed">0</strong><span>Assessed</span></div><div><strong id="topicConfident">0</strong><span>Confident</span></div></div>
+    </div>
+    <div class="board-legend" aria-label="Knowledge levels">
+      <span><i class="topic-dot" data-rating="grey" aria-hidden="true"></i>Not assessed</span>
+      <span><i class="topic-dot" data-rating="red" aria-hidden="true"></i>Needs support</span>
+      <span><i class="topic-dot" data-rating="yellow" aria-hidden="true"></i>Developing</span>
+      <span><i class="topic-dot" data-rating="green" aria-hidden="true"></i>Confident</span>
+      <span class="save-status" id="saveStatus">Ratings saved on this device</span>
+    </div>
+    <div class="topic-board" id="topicBoard"></div>
+    <p class="curriculum-note">Topic checklist based on the <a href="https://www.curriculumonline.ie/junior-cycle/junior-cycle-subjects/mathematics/expectations-for-students/" target="_blank" rel="noopener">NCCA Junior Cycle Mathematics learning outcomes</a>, including Higher Level content. Basic arithmetic is assumed; reasoning, explaining methods and checking answers are practised across every topic.</p>
+  </div>
+</section>
+
+<dialog class="topic-dialog" id="topicDialog" aria-labelledby="dialogTitle" aria-describedby="dialogDescription">
+  <button type="button" class="dialog-close" id="closeTopic" aria-label="Close topic">×</button>
+  <p class="page-eyebrow" id="dialogStrand"></p><h2 id="dialogTitle"></h2>
+  <p class="topic-description" id="dialogDescription"></p>
+  <h3>Jay’s knowledge level</h3>
+  <div class="rating-options" id="ratingOptions" role="radiogroup" aria-label="Knowledge level"></div>
+  <p class="storage-message" id="ratingMessage" role="status">Choose a colour to update this topic.</p>
+  <button type="button" class="dialog-save" id="doneTopic">Done</button>
+</dialog>
 
 
 <footer>Platon Tsuz <b>·</b> Maths tutor demo</footer>
@@ -1122,7 +1233,6 @@ let boardColor = '#17283A';
 let drawing = false;
 let activeBoardPointer = null;
 let pencilDetected = false;
-let shieldReleaseTimer = null;
 let suppressClicksUntil = 0;
 let inputLockActive = false;
 
@@ -1164,23 +1274,24 @@ function pressureWidth(event, erasing = false){
 }
 
 function engageInputShield(){
-  clearTimeout(shieldReleaseTimer);
   inputLockActive = true;
   document.body.classList.add('board-writing');
 }
 
 function releaseInputShield(){
   suppressClicksUntil = performance.now() + 420;
-  clearTimeout(shieldReleaseTimer);
-  shieldReleaseTimer = setTimeout(() => {
-    inputLockActive = false;
-    document.body.classList.remove('board-writing');
-  }, 180);
+  inputLockActive = false;
+  document.body.classList.remove('board-writing');
 }
 
 function blockCompetingPointer(event){
   if (!inputLockActive) return;
   if (activeBoardPointer !== null && event.pointerId === activeBoardPointer) return;
+  // A missed pointerup must never leave the next Pencil stroke locked out.
+  if (event.type === 'pointerdown' && event.pointerType === 'pen' && event.target === canvas){
+    stopDrawing();
+    return;
+  }
   if (event.cancelable) event.preventDefault();
   event.stopImmediatePropagation();
 }
@@ -1190,8 +1301,11 @@ function blockCompetingPointer(event){
 });
 
 document.addEventListener('click', event => {
-  if (!inputLockActive && performance.now() >= suppressClicksUntil) return;
   if (event.target === canvas) return;
+  // Suppress only synthetic touch/Pencil clicks, never mouse or keyboard controls.
+  const touchClick = event.pointerType === 'touch' || event.pointerType === 'pen' ||
+    (event.sourceCapabilities && event.sourceCapabilities.firesTouchEvents);
+  if (!inputLockActive && (!touchClick || performance.now() >= suppressClicksUntil)) return;
   event.preventDefault();
   event.stopImmediatePropagation();
 }, true);
@@ -1253,7 +1367,8 @@ canvas.addEventListener('pointerdown', event => {
 canvas.addEventListener('pointermove', event => {
   if (!drawing || event.pointerId !== activeBoardPointer) return;
   event.preventDefault();
-  const samples = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [event];
+  const coalesced = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [];
+  const samples = coalesced.length ? coalesced : [event];
   samples.forEach(sample => {
     const point = boardPoint(sample);
     boardContext.globalCompositeOperation = boardTool === 'eraser' ? 'destination-out' : 'source-over';
@@ -1268,13 +1383,14 @@ canvas.addEventListener('pointermove', event => {
 
 function stopDrawing(event){
   if (!drawing || (event && activeBoardPointer !== null && event.pointerId !== activeBoardPointer)) return;
+  const finishedPointer = activeBoardPointer;
   drawing = false;
-  boardContext.closePath();
-  if (event && event.pointerId !== undefined && typeof canvas.hasPointerCapture === 'function' &&
-      typeof canvas.releasePointerCapture === 'function' && canvas.hasPointerCapture(event.pointerId)){
-    try { canvas.releasePointerCapture(event.pointerId); } catch (_) {}
-  }
   activeBoardPointer = null;
+  boardContext.closePath();
+  if (finishedPointer !== null && typeof canvas.hasPointerCapture === 'function' &&
+      typeof canvas.releasePointerCapture === 'function' && canvas.hasPointerCapture(finishedPointer)){
+    try { canvas.releasePointerCapture(finishedPointer); } catch (_) {}
+  }
   releaseInputShield();
 }
 
@@ -1288,11 +1404,234 @@ canvas.addEventListener('lostpointercapture', event => {
 });
 
 window.addEventListener('blur', () => {
-  if (!drawing) return;
-  drawing = false;
-  activeBoardPointer = null;
-  releaseInputShield();
+  stopDrawing();
 });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopDrawing();
+});
+
+/* ---------------- students and knowledge board ---------------- */
+// Stable topic IDs keep ratings attached to the correct topic when titles change.
+const JAY_STRANDS = [
+  {title:'Number and applied arithmetic',color:'#2F6F8F',topics:[
+    ['number-sets','Number systems and number sets','Classify natural, integer, rational and irrational numbers. Place values on a number line and explain how the number sets fit inside one another.'],
+    ['factors','Factors, multiples and primes','Use prime factorisation to find highest common factors and lowest common multiples, and decide which one a word problem needs.'],
+    ['indices','Index laws and scientific notation','Simplify expressions with index laws, including zero, negative and fractional indices. Read, write and calculate with very large or small numbers in scientific notation.'],
+    ['surds','Surds','Simplify square-root expressions, combine like surds, and multiply or divide them. Keep exact answers where a rounded decimal would lose accuracy.'],
+    ['accuracy','Rounding, estimation and accuracy','Round to decimal places or significant figures. Estimate before calculating and decide whether an answer has a sensible size and the required accuracy.'],
+    ['percentages','Fractions, decimals and percentages','Convert between equivalent forms and use them in context. Find percentage changes, original values after a change, and compare quantities using percentages.'],
+    ['ratio','Ratio and proportion','Simplify and share in a ratio. Solve proportional relationships and distinguish between a fixed difference and a fixed multiplicative relationship.'],
+    ['money','Bills, VAT, profit and value for money','Work backwards and forwards between cost and selling prices. Calculate discounts, VAT, profit and loss, mark-up and margin, and justify a value-for-money comparison.'],
+    ['interest','Compound interest and depreciation','Model repeated percentage increases or decreases. Find a final amount or work backwards to an original amount, showing the multiplier used at each stage.'],
+    ['income','Income tax, deductions and net pay','Calculate gross earnings and income tax using given tax bands and credits. Include specified deductions and explain the difference between gross pay and take-home pay.'],
+    ['rates','Rates, speed, time and currency','Solve journey, wage, fuel and exchange-rate problems. Choose consistent units and interpret average speed and other rates in a real situation.'],
+    ['sets','Sets and Venn diagrams','Use set notation, unions, intersections, complements and differences. Fill two- and three-set Venn diagrams and use their regions to solve counting problems.']
+  ]},
+  {title:'Algebra and functions',color:'#2E8B77',topics:[
+    ['expressions','Expressions and substitution','Translate a situation into algebra, identify variables and coefficients, and substitute values carefully, especially when brackets or negative values are involved.'],
+    ['simplify','Simplifying expressions','Collect like terms and simplify expressions with several variables. Explain why unlike terms cannot be combined.'],
+    ['expand','Expanding brackets','Multiply single brackets, pairs of linear brackets, and a linear bracket by a quadratic. Organise the products so no term or sign is missed.'],
+    ['factorise','Factorisation','Recognise common factors, grouping, quadratic trinomials and differences of squares. Check a factorisation by expanding it back to the original expression.'],
+    ['algebra-fractions','Algebraic fractions','Simplify, add and subtract expressions with algebraic denominators. Find a common denominator and state any values excluded because a denominator would be zero.'],
+    ['polynomial-division','Polynomial division','Divide quadratic or cubic expressions by a linear expression when the division is exact. Verify the quotient by multiplication.'],
+    ['linear-equations','Linear equations and word problems','Solve equations with brackets or fractions. Build an equation from a word problem and check that the result answers the original question.'],
+    ['quadratic-equations','Quadratic equations','Solve quadratics using factorisation or the quadratic formula. Interpret real solutions in context and generate a quadratic equation from given integer roots.'],
+    ['simultaneous','Simultaneous equations','Solve two linear equations by elimination, substitution or graphs. Interpret the intersection as the pair of values that satisfies both equations.'],
+    ['inequalities','Linear inequalities','Solve inequalities, reversing the sign when multiplying or dividing by a negative. Show solution sets on a number line for the specified number system.'],
+    ['formulae','Rearranging formulae','Make a different variable the subject of a formula. Undo operations in a sensible order, including brackets, fractions and powers.'],
+    ['patterns','Sequences and patterns','Build tables and rules for linear and quadratic patterns. Recognise doubling and tripling patterns, compare rates of growth, and predict later terms.'],
+    ['functions','Functions and function notation','Use function machines, mappings and notation such as f(x). Identify domain, co-domain and range and connect an algebraic rule to its inputs and outputs.'],
+    ['graphs','Graphs and graphical solutions','Plot and interpret functions, including non-linear examples at Higher Level. Read intercepts and turning points, and estimate solutions of equations or inequalities by comparing graphs.']
+  ]},
+  {title:'Geometry, measurement and trigonometry',color:'#B9822F',topics:[
+    ['units','Units, time and scale drawings','Convert length, area, volume and time correctly. Read and construct scale drawings and convert between a diagram and actual measurements.'],
+    ['angles','Angles, triangles and polygons','Use angle relationships on straight lines, around a point and between parallel lines. Apply triangle and polygon properties and explain each step in a missing-angle problem.'],
+    ['congruence','Congruence and similarity','Decide when triangles are congruent or similar and justify the decision. Use corresponding sides, equal angles and proportional lengths to find missing measurements.'],
+    ['pythagoras','Pythagoras’ theorem','Find a missing side in a right-angled triangle and use the converse to test for a right angle. Apply the theorem in diagrams, including composite shapes.'],
+    ['circle-geometry','Circle geometry','Use circle relationships involving the centre, circumference, chords and tangents. Give reasons for angle deductions and apply relevant circle theorems and corollaries.'],
+    ['constructions','Geometrical constructions','Practise the prescribed constructions 1–15, including Higher Level constructions 3 and 7. Use a compass, straightedge and protractor appropriately and leave construction arcs visible.'],
+    ['proof','Geometry reasoning and proof','Understand axioms, theorems, corollaries and converses. Apply the prescribed Higher Level results and explain or evaluate a geometric argument; rote full formal proofs are not required.'],
+    ['transformations','Transformations and symmetry','Draw translations, reflections, rotations and central symmetry. Identify axes of symmetry and describe a transformation precisely enough for another person to reproduce it.'],
+    ['area','Perimeter, area and circles','Find areas and perimeters of simple and composite figures. Work with circles and parts of circles, use pi appropriately, and keep length and area units distinct.'],
+    ['solids','Nets, volume and surface area','Interpret nets and calculate volume or surface area of cuboids, prisms, cylinders and spheres. Break a composite solid into manageable parts and count only the exposed surfaces.'],
+    ['trigonometry','Right-angled trigonometry','Choose sine, cosine or tangent to find a side or angle. Use inverse trigonometric functions and solve practical height, distance and angle-of-elevation problems.'],
+    ['coordinates','Coordinates, distance and midpoint','Plot points accurately, calculate the distance or midpoint between two points, and use those results to investigate shapes in the coordinate plane.'],
+    ['lines','Slope and equations of lines','Find gradients, intercepts and line equations in different forms. Recognise parallel and perpendicular slopes and find or interpret an intersection.']
+  ]},
+  {title:'Statistics and probability',color:'#D95450',topics:[
+    ['investigations','Statistical questions and investigations','Pose a question that can be answered with data, plan a fair investigation, and explain how the results address the original question.'],
+    ['sampling','Data types, samples and bias','Distinguish categorical and numerical data. Choose a representative sample and recognise leading questions, biased sampling and limits on conclusions.'],
+    ['tables','Frequency tables and grouped data','Organise raw data into frequency tables or equal class intervals. Use frequencies to interpret the distribution and to support later calculations.'],
+    ['charts','Charts, histograms and stem-and-leaf plots','Select, draw and interpret bar charts, pie charts, line plots, equal-interval histograms and ordered stem-and-leaf plots, including back-to-back comparisons.'],
+    ['averages','Mean, median, mode and range','Calculate and interpret averages and range, including the mean from grouped data. Choose a useful summary and explain what it reveals or conceals.'],
+    ['statistics-claims','Comparing data and evaluating claims','Compare distributions using displays and summaries. Recognise misleading scales and unsupported claims, and explain limitations of conclusions drawn from a sample.'],
+    ['sample-space','Sample spaces and counting','List outcomes systematically with tables or tree diagrams. Use the counting principle to count choices across successive stages.'],
+    ['probability','Theoretical probability and events','Calculate probabilities for equally likely outcomes, use complements, and interpret events involving two or more stages with an appropriate sample space.'],
+    ['frequency','Relative frequency and experiments','Estimate probability from experimental results and compare it with a theoretical model. Explain why a larger number of trials usually gives a more stable estimate.']
+  ]}
+];
+const KNOWLEDGE_LEVELS = [
+  ['grey','Not assessed'],['red','Needs support'],['yellow','Developing'],['green','Confident']
+];
+const RATINGS_KEY = 'irish-maths-tutor:jay:jc-higher:v1';
+let jayRatings = {};
+let storageAvailable = true;
+try {
+  const saved = JSON.parse(localStorage.getItem(RATINGS_KEY) || '{}');
+  if (saved && typeof saved === 'object' && !Array.isArray(saved)){
+    JAY_STRANDS.forEach(strand => strand.topics.forEach(([id]) => {
+      if (KNOWLEDGE_LEVELS.some(([rating]) => rating === saved[id])) jayRatings[id] = saved[id];
+    }));
+  }
+} catch (_) { storageAvailable = false; }
+
+const menuToggle = document.getElementById('menuToggle');
+const menuPanel = document.getElementById('menuPanel');
+const topicDialog = document.getElementById('topicDialog');
+let selectedTopicId = null;
+let topicOpener = null;
+
+function closeMenu(){
+  menuPanel.hidden = true;
+  menuToggle.setAttribute('aria-expanded','false');
+}
+menuToggle.addEventListener('click', () => {
+  menuPanel.hidden = !menuPanel.hidden;
+  menuToggle.setAttribute('aria-expanded',String(!menuPanel.hidden));
+});
+document.addEventListener('click', event => {
+  if (!event.target.closest('.app-menu')) closeMenu();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !menuPanel.hidden){closeMenu();menuToggle.focus();}
+});
+
+function showAppView(){
+  const studentsActive = location.hash === '#students' || location.hash === '#students/jay';
+  const jayActive = location.hash === '#students/jay';
+  stopDrawing();
+  if (topicDialog.open) topicDialog.close();
+  document.getElementById('grindsView').hidden = studentsActive;
+  document.getElementById('studentsView').hidden = !studentsActive;
+  document.getElementById('studentDirectory').hidden = jayActive;
+  document.getElementById('jayBoard').hidden = !jayActive;
+  document.getElementById('studentsView').setAttribute('aria-labelledby',jayActive ? 'jayTitle' : 'studentsTitle');
+  for (const [id,active] of [['studentsNav',studentsActive],['grindsNav',!studentsActive]]){
+    const button = document.getElementById(id);
+    if (active) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
+  }
+  closeMenu();
+  if (!studentsActive) requestAnimationFrame(resizeBoard);
+}
+document.getElementById('studentsNav').onclick = () => {location.hash = 'students';};
+document.getElementById('grindsNav').onclick = () => {location.hash = 'grinds';};
+document.getElementById('backStudents').onclick = () => {location.hash = 'students';};
+window.addEventListener('hashchange',showAppView);
+
+const studentList = document.getElementById('studentList');
+['Jay','Aoife','Liam','Saoirse','Cian','Emma','Noah','Niamh','Oisín'].forEach((name,index) => {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'student-card';
+  button.disabled = index !== 0;
+  button.innerHTML = `<span class="student-avatar" aria-hidden="true">${name.charAt(0)}</span><span><strong>${name}</strong><small>${index === 0 ? 'Junior Cycle · Higher Level' : 'Preview student · not set up yet'}</small></span>${index === 0 ? '<span class="student-arrow" aria-hidden="true">↗</span>' : ''}`;
+  if (index === 0) button.onclick = () => {location.hash = 'students/jay';};
+  studentList.appendChild(button);
+});
+
+function ratingFor(id){return jayRatings[id] || 'grey';}
+function ratingLabel(rating){return KNOWLEDGE_LEVELS.find(([value]) => value === rating)[1];}
+function updateTopicBoard(){
+  let total = 0, assessed = 0, confident = 0;
+  document.querySelectorAll('.topic-row').forEach(button => {
+    const rating = ratingFor(button.dataset.topic);
+    button.querySelector('.topic-dot').dataset.rating = rating;
+    button.setAttribute('aria-label',`${button.dataset.title}: ${ratingLabel(rating)}. Open topic details.`);
+    total++;
+    if (rating !== 'grey') assessed++;
+    if (rating === 'green') confident++;
+  });
+  document.getElementById('topicTotal').textContent = total;
+  document.getElementById('topicAssessed').textContent = assessed;
+  document.getElementById('topicConfident').textContent = confident;
+  document.getElementById('saveStatus').textContent = storageAvailable ? 'Ratings saved on this device' : 'Ratings available for this session only';
+}
+
+JAY_STRANDS.forEach((strand,index) => {
+  const section = document.createElement('section');
+  section.className = 'topic-column';
+  section.style.setProperty('--strand-color',strand.color);
+  section.innerHTML = `<header><small>${String(index + 1).padStart(2,'0')} / ${strand.topics.length} topics</small><h2>${strand.title}</h2></header><div class="topic-list"></div>`;
+  strand.topics.forEach(([id,title,description]) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'topic-row';
+    button.dataset.topic = id;
+    button.dataset.title = title;
+    button.setAttribute('aria-haspopup','dialog');
+    button.innerHTML = `<i class="topic-dot" aria-hidden="true"></i><span>${title}</span><span class="row-chevron" aria-hidden="true">›</span>`;
+    button.onclick = () => {
+      selectedTopicId = id;
+      topicOpener = button;
+      document.getElementById('dialogStrand').textContent = strand.title;
+      document.getElementById('dialogTitle').textContent = title;
+      document.getElementById('dialogDescription').textContent = description;
+      document.getElementById('ratingMessage').textContent = 'Choose a colour to update this topic.';
+      syncRatingOptions();
+      topicDialog.showModal();
+    };
+    section.querySelector('.topic-list').appendChild(button);
+  });
+  document.getElementById('topicBoard').appendChild(section);
+});
+
+function syncRatingOptions(){
+  document.querySelectorAll('.rating-option').forEach(button => {
+    const checked = button.dataset.rating === ratingFor(selectedTopicId);
+    button.setAttribute('aria-checked',String(checked));
+    button.tabIndex = checked ? 0 : -1;
+  });
+}
+function setTopicRating(rating){
+  if (!selectedTopicId) return;
+  jayRatings[selectedTopicId] = rating;
+  try {localStorage.setItem(RATINGS_KEY,JSON.stringify(jayRatings));storageAvailable = true;}
+  catch (_) {storageAvailable = false;}
+  syncRatingOptions();
+  updateTopicBoard();
+  document.getElementById('ratingMessage').textContent = storageAvailable ? `${ratingLabel(rating)} · saved on this device.` : `${ratingLabel(rating)} · browser storage is unavailable; this change lasts for this session.`;
+}
+KNOWLEDGE_LEVELS.forEach(([rating,label]) => {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'rating-option';
+  button.dataset.rating = rating;
+  button.setAttribute('role','radio');
+  button.innerHTML = `<i class="topic-dot" data-rating="${rating}" aria-hidden="true"></i>${label}`;
+  button.onclick = () => setTopicRating(rating);
+  button.onkeydown = event => {
+    const offset = ['ArrowRight','ArrowDown'].includes(event.key) ? 1 : ['ArrowLeft','ArrowUp'].includes(event.key) ? -1 : 0;
+    if (!offset) return;
+    event.preventDefault();
+    const buttons = [...document.querySelectorAll('.rating-option')];
+    const next = buttons[(buttons.indexOf(button) + offset + buttons.length) % buttons.length];
+    next.focus();
+    setTopicRating(next.dataset.rating);
+  };
+  document.getElementById('ratingOptions').appendChild(button);
+});
+document.getElementById('closeTopic').onclick = () => topicDialog.close();
+document.getElementById('doneTopic').onclick = () => topicDialog.close();
+topicDialog.addEventListener('close', () => {
+  if (topicOpener && !document.getElementById('studentsView').hidden) topicOpener.focus();
+});
+topicDialog.addEventListener('click', event => {
+  if (event.target !== topicDialog) return;
+  const rect = topicDialog.getBoundingClientRect();
+  if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) topicDialog.close();
+});
+updateTopicBoard();
+showAppView();
 
 if ('ResizeObserver' in window){
   new ResizeObserver(() => resizeBoard()).observe(canvasWrap);

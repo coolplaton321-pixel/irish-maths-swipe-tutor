@@ -442,6 +442,7 @@
   .topic-row:hover{background:#F3F6F8;border-radius:10px}
   .topic-row .topic-dot{width:9px;height:9px}
   .topic-row .row-chevron{margin-left:auto;color:#A8B2BC;font-size:17px}
+  .topic-level{font-weight:700;font-size:11px;white-space:nowrap;color:var(--ink-soft)}
   .curriculum-note{font-size:11px;line-height:1.7;color:var(--ink-soft);margin:22px 0 0}
   .curriculum-note a{color:inherit}
   .topic-dialog{width:min(520px,calc(100% - 32px));max-height:85dvh;border:1px solid #E3E8ED;border-radius:24px;padding:30px;color:var(--ink);background:#fff;box-shadow:0 24px 80px rgba(20,40,50,.25)}
@@ -537,7 +538,7 @@
       <span class="save-status" id="saveStatus">Ratings saved on this device</span>
     </div>
     <div class="topic-board" id="topicBoard"></div>
-    <p class="curriculum-note">Topic checklist based on the <a href="https://www.curriculumonline.ie/junior-cycle/junior-cycle-subjects/mathematics/expectations-for-students/" target="_blank" rel="noopener">NCCA Junior Cycle Mathematics learning outcomes</a>, including Higher Level content. Basic arithmetic is assumed; reasoning, explaining methods and checking answers are practised across every topic.</p>
+    <p class="curriculum-note">(HL) means the topic includes Higher Level-only content; open it to see which parts. Unmarked topics are shared with Ordinary Level. Topic checklist based on the <a href="https://www.curriculumonline.ie/junior-cycle/junior-cycle-subjects/mathematics/expectations-for-students/" target="_blank" rel="noopener">NCCA Junior Cycle Mathematics learning outcomes</a>. Basic arithmetic is assumed; reasoning, explaining methods and checking answers are practised across every topic.</p>
   </div>
 </section>
 
@@ -545,6 +546,7 @@
   <button type="button" class="dialog-close" id="closeTopic" aria-label="Close topic">×</button>
   <p class="page-eyebrow" id="dialogStrand"></p><h2 id="dialogTitle"></h2>
   <p class="topic-description" id="dialogDescription"></p>
+  <p class="topic-description" id="dialogHigherContent" hidden></p>
   <h3>Jay’s knowledge level</h3>
   <div class="rating-options" id="ratingOptions" role="radiogroup" aria-label="Knowledge level"></div>
   <p class="storage-message" id="ratingMessage" role="status">Choose a colour to update this topic.</p>
@@ -1452,14 +1454,14 @@ const JAY_STRANDS = [
     ['formulae','Rearranging formulae','Make a different variable the subject of a formula. Undo operations in a sensible order, including brackets, fractions and powers.'],
     ['patterns','Sequences and patterns','Build tables and rules for linear and quadratic patterns. Recognise doubling and tripling patterns, compare rates of growth, and predict later terms.'],
     ['functions','Functions and function notation','Use function machines, mappings and notation such as f(x). Identify domain, co-domain and range and connect an algebraic rule to its inputs and outputs.'],
-    ['graphs','Graphs and graphical solutions','Plot and interpret functions, including non-linear examples at Higher Level. Read intercepts and turning points, and estimate solutions of equations or inequalities by comparing graphs.']
+    ['graphs','Graphs and graphical solutions','Plot and interpret linear, quadratic and other functions. Read intercepts and turning points, and estimate solutions of equations or inequalities by comparing graphs.']
   ]},
   {title:'Geometry, measurement and trigonometry',color:'#B9822F',topics:[
     ['units','Units, time and scale drawings','Convert length, area, volume and time correctly. Read and construct scale drawings and convert between a diagram and actual measurements.'],
     ['angles','Angles, triangles and polygons','Use angle relationships on straight lines, around a point and between parallel lines. Apply triangle and polygon properties and explain each step in a missing-angle problem.'],
     ['congruence','Congruence and similarity','Decide when triangles are congruent or similar and justify the decision. Use corresponding sides, equal angles and proportional lengths to find missing measurements.'],
     ['pythagoras','Pythagoras’ theorem','Find a missing side in a right-angled triangle and use the converse to test for a right angle. Apply the theorem in diagrams, including composite shapes.'],
-    ['circle-geometry','Circle geometry','Use circle relationships involving the centre, circumference, chords and tangents. Give reasons for angle deductions and apply relevant circle theorems and corollaries.'],
+    ['circle-geometry','Circle geometry','Use circle relationships involving the centre, circumference and chords. Give reasons for angle deductions and apply the prescribed circle theorems and corollaries.'],
     ['constructions','Geometrical constructions','Practise the prescribed constructions 1–15, including Higher Level constructions 3 and 7. Use a compass, straightedge and protractor appropriately and leave construction arcs visible.'],
     ['proof','Geometry reasoning and proof','Understand axioms, theorems, corollaries and converses. Apply the prescribed Higher Level results and explain or evaluate a geometric argument; rote full formal proofs are not required.'],
     ['transformations','Transformations and symmetry','Draw translations, reflections, rotations and central symmetry. Identify axes of symmetry and describe a transformation precisely enough for another person to reproduce it.'],
@@ -1481,6 +1483,35 @@ const JAY_STRANDS = [
     ['frequency','Relative frequency and experiments','Estimate probability from experimental results and compare it with a theoretical model. Explain why a larger number of trials usually gives a more stable estimate.']
   ]}
 ];
+// Matches the bold additions in NCCA's specification, pp. 15–20.
+// Most flagged rows combine shared content with an HL extension, not an HL-only topic.
+const HIGHER_CONTENT = {
+  indices:{detail:'Zero/negative/fractional indices; scientific notation below 1.'},
+  surds:{only:true,detail:'Operations on surds.'},
+  money:{detail:'Mark-up and margin.'},
+  interest:{detail:'Compound interest beyond three years.'},
+  income:{detail:'Income tax beyond standard-rate-only cases.'},
+  sets:{detail:'Three-set diagrams and set-operation laws.'},
+  expand:{detail:'Linear-by-quadratic products.'},
+  factorise:{detail:'Non-monic quadratics and general differences of squares.'},
+  'algebra-fractions':{only:true,detail:'Expressions with variable denominators.'},
+  'polynomial-division':{detail:'Cubic division; quadratic division is shared.'},
+  'linear-equations':{detail:'Rational solutions.'},
+  'quadratic-equations':{detail:'General real solutions; generating equations from roots.'},
+  simultaneous:{detail:'Rational solutions.'},
+  formulae:{only:true,detail:'Changing a formula’s subject.'},
+  patterns:{detail:'Quadratic rules; classifying quadratic/exponential patterns.'},
+  graphs:{detail:'Graphs beyond quadratics; graphical inequalities.'},
+  congruence:{detail:'Parallel-line results (theorems 11/12); parallelogram corollary 1.'},
+  'circle-geometry':{detail:'Centre/circumference theorem 19; corollaries 2/5.'},
+  constructions:{detail:'Constructions 3 and 7.'},
+  proof:{detail:'Theorems 11/12/19; corollaries 1/2/5; additional proof understanding.'},
+  solids:{detail:'Prism/cylinder nets; sphere/prism volumes; extended surface area.'},
+  trigonometry:{detail:'Decimal-valued angles.'},
+  lines:{detail:'Perpendicular slopes; general-form line equations.'},
+  charts:{detail:'Back-to-back stem-and-leaf plots.'},
+  averages:{detail:'Mean of grouped frequency data.'}
+};
 const KNOWLEDGE_LEVELS = [
   ['grey','Not assessed'],['red','Needs support'],['yellow','Developing'],['green','Confident']
 ];
@@ -1574,19 +1605,24 @@ JAY_STRANDS.forEach((strand,index) => {
   section.style.setProperty('--strand-color',strand.color);
   section.innerHTML = `<header><small>${String(index + 1).padStart(2,'0')} / ${strand.topics.length} topics</small><h2>${strand.title}</h2></header><div class="topic-list"></div>`;
   strand.topics.forEach(([id,title,description]) => {
+    const higher = HIGHER_CONTENT[id];
+    const displayTitle = title + (higher ? ' (HL)' : '');
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'topic-row';
     button.dataset.topic = id;
-    button.dataset.title = title;
+    button.dataset.title = displayTitle;
     button.setAttribute('aria-haspopup','dialog');
-    button.innerHTML = `<i class="topic-dot" aria-hidden="true"></i><span>${title}</span><span class="row-chevron" aria-hidden="true">›</span>`;
+    button.innerHTML = `<i class="topic-dot" aria-hidden="true"></i><span>${title}${higher ? ' <span class="topic-level">(HL)</span>' : ''}</span><span class="row-chevron" aria-hidden="true">›</span>`;
     button.onclick = () => {
       selectedTopicId = id;
       topicOpener = button;
       document.getElementById('dialogStrand').textContent = strand.title;
-      document.getElementById('dialogTitle').textContent = title;
+      document.getElementById('dialogTitle').textContent = displayTitle;
       document.getElementById('dialogDescription').textContent = description;
+      const higherDescription = document.getElementById('dialogHigherContent');
+      higherDescription.hidden = !higher;
+      higherDescription.textContent = higher ? `${higher.only ? 'Higher Level-only topic' : 'Shared topic — Higher Level additions'}: ${higher.detail}` : '';
       document.getElementById('ratingMessage').textContent = 'Choose a colour to update this topic.';
       syncRatingOptions();
       topicDialog.showModal();

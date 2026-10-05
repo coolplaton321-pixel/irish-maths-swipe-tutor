@@ -521,10 +521,10 @@
     <p class="page-intro">A clear picture of what each student knows, and what comes next.</p>
     <div class="student-list" id="studentList"></div>
   </div>
-  <div id="jayBoard" hidden>
+  <div id="studentBoard" hidden>
     <button type="button" class="back-students" id="backStudents" aria-label="All students" title="All students">←</button>
     <div class="student-heading">
-      <div><h1 id="jayTitle">Jay</h1><p class="page-intro">Third year</p><span class="exam-tag">Junior Cycle · Higher Level</span></div>
+      <div><h1 id="studentName">Jay</h1><p class="page-intro" id="studentYear">Third year</p><span class="exam-tag">Junior Cycle · Higher Level</span></div>
       <div class="progress-summary" aria-label="Topic progress" aria-live="polite"><div><strong id="topicTotal">0</strong><span>Topics</span></div><div><strong id="topicAssessed">0</strong><span>Assessed</span></div><div><strong id="topicConfident">0</strong><span>Confident</span></div></div>
     </div>
     <div class="topic-board" id="topicBoard"></div>
@@ -537,7 +537,7 @@
   <p class="page-eyebrow" id="dialogStrand"></p><h2 id="dialogTitle"></h2>
   <p class="topic-description" id="dialogDescription"></p>
   <p class="topic-description" id="dialogHigherContent" hidden></p>
-  <h3>Jay’s knowledge level</h3>
+  <h3 id="knowledgeHeading">Jay’s knowledge level</h3>
   <div class="rating-options" id="ratingOptions" role="radiogroup" aria-label="Knowledge level"></div>
   <p class="storage-message" id="ratingMessage" role="status">Choose a colour to update this topic.</p>
   <button type="button" class="dialog-save" id="doneTopic">Done</button>
@@ -1415,7 +1415,7 @@ document.addEventListener('visibilitychange', () => {
 
 /* ---------------- students and knowledge board ---------------- */
 // Stable topic IDs keep ratings attached to the correct topic when titles change.
-const JAY_STRANDS = [
+const JUNIOR_HIGHER_STRANDS = [
   {title:'Number and applied arithmetic',color:'#2F6F8F',topics:[
     ['number-sets','Number systems and number sets','Classify natural, integer, rational and irrational numbers. Place values on a number line and explain how the number sets fit inside one another.'],
     ['factors','Factors, multiples and primes','Use prime factorisation to find highest common factors and lowest common multiples, and decide which one a word problem needs.'],
@@ -1505,17 +1505,75 @@ const HIGHER_CONTENT = {
 const KNOWLEDGE_LEVELS = [
   ['grey','Not assessed'],['red','Needs support'],['yellow','Developing'],['green','Confident']
 ];
-const RATINGS_KEY = 'irish-maths-tutor:jay:jc-higher:v1';
-let jayRatings = {};
+const STUDENTS = [
+  {id:'jay',name:'Jay'},
+  {id:'aoife',name:'Aoife'},
+  {id:'liam',name:'Liam'},
+  {id:'saoirse',name:'Saoirse'},
+  {id:'cian',name:'Cian'},
+  {id:'emma',name:'Emma'},
+  {id:'noah',name:'Noah'},
+  {id:'niamh',name:'Niamh'},
+  {id:'oisin',name:'Oisín'},
+  {id:'vladimir',name:'Vladimir'},
+  {id:'masha',name:'Masha'},
+  {id:'aarav',name:'Aarav'},
+  {id:'priya',name:'Priya'},
+  {id:'rohan',name:'Rohan'}
+];
+const STUDENT_ORDER_KEY = 'irish-maths-tutor:student-order:v1';
+const ratingsByStudent = new Map();
+let activeStudent = STUDENTS[0];
+let studentRatings = {};
 let storageAvailable = true;
-try {
-  const saved = JSON.parse(localStorage.getItem(RATINGS_KEY) || '{}');
+
+function studentRatingsKey(student){
+  // Jay's original key is unchanged, so his existing ratings are preserved.
+  return `irish-maths-tutor:${student.id}:jc-higher:v1`;
+}
+function loadStudentRatings(student){
+  if (ratingsByStudent.has(student.id)) return ratingsByStudent.get(student.id);
+  let saved = null;
+  let ratings = {};
+  try {
+    const raw = localStorage.getItem(studentRatingsKey(student));
+    if (raw !== null) saved = JSON.parse(raw);
+  } catch (_) {storageAvailable = false;}
   if (saved && typeof saved === 'object' && !Array.isArray(saved)){
-    JAY_STRANDS.forEach(strand => strand.topics.forEach(([id]) => {
-      if (KNOWLEDGE_LEVELS.some(([rating]) => rating === saved[id])) jayRatings[id] = saved[id];
+    JUNIOR_HIGHER_STRANDS.forEach(strand => strand.topics.forEach(([id]) => {
+      if (KNOWLEDGE_LEVELS.some(([rating]) => rating === saved[id])) ratings[id] = saved[id];
     }));
+  } else if (student.id !== 'jay'){
+    // Sample profiles get random demo ratings once, then retain user changes.
+    const sampleLevels = shuffled(KNOWLEDGE_LEVELS.map(([rating]) => rating));
+    JUNIOR_HIGHER_STRANDS.flatMap(strand => strand.topics).forEach(([id],index) => {
+      ratings[id] = index < sampleLevels.length ? sampleLevels[index] : KNOWLEDGE_LEVELS[Math.floor(Math.random() * KNOWLEDGE_LEVELS.length)][0];
+    });
+    try {localStorage.setItem(studentRatingsKey(student),JSON.stringify(ratings));}
+    catch (_) {storageAvailable = false;}
   }
-} catch (_) { storageAvailable = false; }
+  ratingsByStudent.set(student.id,ratings);
+  return ratings;
+}
+function shuffled(items){
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i],result[j]] = [result[j],result[i]];
+  }
+  return result;
+}
+function studentDirectoryOrder(){
+  const otherIds = STUDENTS.filter(student => student.id !== 'jay').map(student => student.id);
+  let savedOrder = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem(STUDENT_ORDER_KEY) || '[]');
+    if (Array.isArray(saved)) savedOrder = [...new Set(saved.filter(id => otherIds.includes(id)))];
+  } catch (_) {}
+  const order = [...savedOrder,...shuffled(otherIds.filter(id => !savedOrder.includes(id)))];
+  try {localStorage.setItem(STUDENT_ORDER_KEY,JSON.stringify(order));} catch (_) {}
+  return ['jay',...order].map(id => STUDENTS.find(student => student.id === id));
+}
 
 const menuToggle = document.getElementById('menuToggle');
 const menuPanel = document.getElementById('menuPanel');
@@ -1539,15 +1597,25 @@ document.addEventListener('keydown', event => {
 });
 
 function showAppView(){
-  const studentsActive = location.hash === '#students' || location.hash === '#students/jay';
-  const jayActive = location.hash === '#students/jay';
+  const studentsActive = location.hash === '#students' || location.hash.startsWith('#students/');
+  const student = STUDENTS.find(profile => location.hash === `#students/${profile.id}`);
+  const boardActive = Boolean(student);
   stopDrawing();
   if (topicDialog.open) topicDialog.close();
+  selectedTopicId = null;
+  if (student){
+    activeStudent = student;
+    studentRatings = loadStudentRatings(student);
+    document.getElementById('studentName').textContent = student.name;
+    document.getElementById('studentYear').textContent = student.id === 'jay' ? 'Third year' : 'Third year · Sample profile';
+    document.getElementById('knowledgeHeading').textContent = `${student.name}’s knowledge level`;
+    updateTopicBoard();
+  }
   document.getElementById('grindsView').hidden = studentsActive;
   document.getElementById('studentsView').hidden = !studentsActive;
-  document.getElementById('studentDirectory').hidden = jayActive;
-  document.getElementById('jayBoard').hidden = !jayActive;
-  document.getElementById('studentsView').setAttribute('aria-labelledby',jayActive ? 'jayTitle' : 'studentsTitle');
+  document.getElementById('studentDirectory').hidden = boardActive;
+  document.getElementById('studentBoard').hidden = !boardActive;
+  document.getElementById('studentsView').setAttribute('aria-labelledby',boardActive ? 'studentName' : 'studentsTitle');
   for (const [id,active] of [['studentsNav',studentsActive],['grindsNav',!studentsActive]]){
     const button = document.getElementById(id);
     if (active) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
@@ -1561,17 +1629,17 @@ document.getElementById('backStudents').onclick = () => {location.hash = 'studen
 window.addEventListener('hashchange',showAppView);
 
 const studentList = document.getElementById('studentList');
-['Jay','Aoife','Liam','Saoirse','Cian','Emma','Noah','Niamh','Oisín'].forEach((name,index) => {
+studentDirectoryOrder().forEach(student => {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'student-card';
-  button.disabled = index !== 0;
-  button.innerHTML = `<span class="student-avatar" aria-hidden="true">${name.charAt(0)}</span><span><strong>${name}</strong><small>${index === 0 ? 'Junior Cycle · Higher Level' : 'Preview student · not set up yet'}</small></span>${index === 0 ? '<span class="student-arrow" aria-hidden="true">↗</span>' : ''}`;
-  if (index === 0) button.onclick = () => {location.hash = 'students/jay';};
+  button.dataset.student = student.id;
+  button.innerHTML = `<span class="student-avatar" aria-hidden="true">${student.name.charAt(0)}</span><span><strong>${student.name}</strong><small>Junior Cycle · Higher Level${student.id !== 'jay' ? '<br>Sample profile' : ''}</small></span><span class="student-arrow" aria-hidden="true">↗</span>`;
+  button.onclick = () => {location.hash = `students/${student.id}`;};
   studentList.appendChild(button);
 });
 
-function ratingFor(id){return jayRatings[id] || 'grey';}
+function ratingFor(id){return studentRatings[id] || 'grey';}
 function ratingLabel(rating){return KNOWLEDGE_LEVELS.find(([value]) => value === rating)[1];}
 function updateTopicBoard(){
   let total = 0, assessed = 0, confident = 0;
@@ -1588,7 +1656,7 @@ function updateTopicBoard(){
   document.getElementById('topicConfident').textContent = confident;
 }
 
-JAY_STRANDS.forEach((strand,index) => {
+JUNIOR_HIGHER_STRANDS.forEach((strand,index) => {
   const section = document.createElement('section');
   section.className = 'topic-column';
   section.style.setProperty('--strand-color',strand.color);
@@ -1630,8 +1698,8 @@ function syncRatingOptions(){
 }
 function setTopicRating(rating){
   if (!selectedTopicId) return;
-  jayRatings[selectedTopicId] = rating;
-  try {localStorage.setItem(RATINGS_KEY,JSON.stringify(jayRatings));storageAvailable = true;}
+  studentRatings[selectedTopicId] = rating;
+  try {localStorage.setItem(studentRatingsKey(activeStudent),JSON.stringify(studentRatings));storageAvailable = true;}
   catch (_) {storageAvailable = false;}
   syncRatingOptions();
   updateTopicBoard();

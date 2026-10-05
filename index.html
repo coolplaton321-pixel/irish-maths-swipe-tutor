@@ -1522,7 +1522,7 @@ const STUDENTS = [
   {id:'rohan',name:'Rohan',exam:'Junior Cycle · Ordinary Level',year:'Third year'}
 ];
 const STUDENT_ORDER_KEY = 'irish-maths-tutor:student-order:v1';
-const VLADIMIR_PRESET_VERSION = '90-green:v1';
+const VLADIMIR_PRESET_VERSION = '90-green-rest-yellow:v2';
 const ratingsByStudent = new Map();
 let activeStudent = STUDENTS[0];
 let studentRatings = {};
@@ -1544,9 +1544,11 @@ function loadStudentRatings(student){
     // Apply the requested profile once, including over the older random ratings.
     const topics = shuffled(JUNIOR_HIGHER_STRANDS.flatMap(strand => strand.topics));
     const greenCount = Math.round(topics.length * 0.9);
-    const remainingLevels = ['yellow','red','grey'];
-    topics.forEach(([id],index) => {
-      ratings[id] = index < greenCount ? 'green' : remainingLevels[(index - greenCount) % remainingLevels.length];
+    // Preserve the same green topics when updating the previous 90% preset.
+    const previousGreens = topics.filter(([id]) => saved && saved.__presetVersion === '90-green:v1' && saved[id] === 'green').map(([id]) => id);
+    const greenIds = new Set(previousGreens.length === greenCount ? previousGreens : topics.slice(0,greenCount).map(([id]) => id));
+    topics.forEach(([id]) => {
+      ratings[id] = greenIds.has(id) ? 'green' : 'yellow';
     });
     ratings.__presetVersion = VLADIMIR_PRESET_VERSION;
     try {localStorage.setItem(studentRatingsKey(student),JSON.stringify(ratings));}

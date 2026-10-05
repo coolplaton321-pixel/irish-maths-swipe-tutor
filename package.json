@@ -1,0 +1,12 @@
+{
+  "name": "plato-maths-school",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Irish maths practice and private teacher progress tracking",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.2"
+  }
+}

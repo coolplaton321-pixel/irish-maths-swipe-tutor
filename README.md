@@ -26,11 +26,23 @@ An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certifica
 - Random initial ratings for other students, with Vladimir set to 43 of 48 topics green (89.6%) and the remaining five yellow; Jay's ratings are preserved
 - Responsive landscape and portrait layouts
 
-The application is a self-contained static website. Open `index.html` locally or serve it with GitHub Pages.
+The application is a static website served with GitHub Pages at https://coolplaton321-pixel.github.io/plato-maths-school/. Run `npm ci` and `npm run build` to regenerate the committed, locally served Supabase browser client. Package versions and the lockfile are pinned; no external JavaScript CDN is used.
 
 The board uses Pointer Events for mouse and other devices, and WebKit's stylus TouchEvents for Apple Pencil where available. Non-passive board touch handlers cancel native canvas gestures. Pencil and pointer streams are deduplicated, and a Pencil lift ends that stroke independently of any resting palm. Page-wide scrolling styles are not toggled between strokes, and late pointer-capture events cannot cancel the next Pencil stroke.
 
-Open `#students/jay` for Jay's topic board, `#students` for the directory, or `#grinds` for the revision workspace. Every directory card opens its own board at `#students/<id>`. Grey means not assessed, red needs support, yellow developing and green confident. Ratings are teaching judgements, not exam grades. They survive refreshes on the same browser, but do not sync between devices and are removed if browser site data is cleared. No student ratings are published to the repository or sent to a server.
+Open `#students/jay` for Jay's topic board, `#students` for the directory, or `#grinds` for the revision workspace. Every directory card opens its own board at `#students/<id>`. Grey means not assessed, red needs support, yellow developing and green confident. Ratings are teaching judgements, not exam grades.
+
+## Private cloud colours
+
+Student ratings use the separate **plato-maths-school** Supabase project (`iljziesnhngxpbcrjvww`, Ireland region). The existing finance/other-app project is untouched. Only this new project's `student_topic_ratings` table is used. A public publishable key is committed; no secret or service-role key is present in the website.
+
+Choose **Teacher sign in** in Students, create an email/password account, verify the email, and use the same account on the computer and iPad. Passwords are sent directly to Supabase Auth, never saved by app code or to this repository. Supabase's default free mail service sends only to organisation-member email addresses. Other addresses need custom SMTP configured in this new project. The confirmation-link paste option verifies the original email link directly on this site, so setup still works without changing the project's default redirect settings. Alternatively, configure the Site URL and allowed redirects to `https://coolplaton321-pixel.github.io/plato-maths-school/` in this project's Auth URL Configuration. Email confirmations stay enabled.
+
+Row-level security restricts SELECT, INSERT and UPDATE to the signed-in owner. Anonymous visitors, anonymous auth users and other accounts cannot access that owner's colours. The indexed composite primary key is `(owner_id, student_id, topic_id)`. Grey is an explicit persisted value, so resetting a topic also syncs. The versioned migration is in `supabase/migrations/`.
+
+On first sign-in this browser's original student colours are imported into missing cloud rows only. Cloud values take priority and insert-or-ignore prevents a second device from overwriting them with new random presets. Browser imports are claimed by one account to avoid leaking local colours into a different account. Subsequent accounts receive independent starter profiles. Account-scoped local caches and pending-write queues are separate from the original guest keys. Signing out restores device-only colours.
+
+Edits appear immediately and save in order, with an account-scoped offline queue and a visible sync status/retry button. Saved colours refresh when the tab returns to the foreground and every 30 seconds. Failed saves remain queued, never labelled cloud-saved. Signing out is blocked while unsynced changes remain. Until sign-in, the existing device-only behaviour remains available. Clearing browser data removes unsynced/device-only colours, but signed-in cloud colours can be restored by signing in again.
 
 Jay keeps his original storage key. Other profiles start with random ratings generated on first opening and saved independently for each student. The shuffled directory order also persists in the browser, with Jay always pinned first. These demonstration profiles can be edited without changing Jay's ratings. Exam and year labels vary by student; this is a presentation-only change, and all topic boards still use the existing Junior Cycle Higher checklist, not exam-specific curricula.
 

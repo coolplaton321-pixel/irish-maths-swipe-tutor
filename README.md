@@ -1,6 +1,6 @@
-# Irish Maths Swipe Tutor
+# Plato Maths School
 
-An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certificate students.
+An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certificate students, published as `plato-maths-school`.
 
 ## Features
 

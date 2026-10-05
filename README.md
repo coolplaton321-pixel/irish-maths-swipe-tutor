@@ -14,6 +14,7 @@ An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certifica
 - Eraser for correcting work
 - Clear board button to erase all marks while keeping the selected drawing tool
 - Immediate consecutive drawing strokes with palm rejection while writing
+- Native Apple Pencil touch handling on iPad, with immediate lift-to-next-stroke release even while a palm remains on screen
 - Top-left menu switching between Students and the existing Grinds workspace
 - Jay's Junior Cycle Higher Level board with 48 topics across four strands
 - Topic descriptions and grey, red, yellow and green knowledge ratings
@@ -25,6 +26,8 @@ An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certifica
 - Responsive landscape and portrait layouts
 
 The application is a self-contained static website. Open `index.html` locally or serve it with GitHub Pages.
+
+The board uses Pointer Events for mouse and other devices, and WebKit's stylus TouchEvents for Apple Pencil where available. Non-passive board touch handlers cancel native canvas gestures. Pencil and pointer streams are deduplicated, and a Pencil lift ends that stroke independently of any resting palm. Page-wide scrolling styles are not toggled between strokes, and late pointer-capture events cannot cancel the next Pencil stroke.
 
 Open `#students/jay` for Jay's topic board, `#students` for the directory, or `#grinds` for the revision workspace. Every directory card opens its own board at `#students/<id>`. Grey means not assessed, red needs support, yellow developing and green confident. Ratings are teaching judgements, not exam grades. They survive refreshes on the same browser, but do not sync between devices and are removed if browser site data is cleared. No student ratings are published to the repository or sent to a server.
 

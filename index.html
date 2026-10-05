@@ -330,6 +330,7 @@
       linear-gradient(90deg, rgba(47,111,143,.075) 1px, transparent 1px);
     background-size:24px 24px;
     overscroll-behavior:contain;
+    touch-action:none;
   }
   #scratchCanvas{
     display:block;
@@ -340,13 +341,6 @@
     -webkit-user-select:none;
     user-select:none;
     -webkit-touch-callout:none;
-  }
-  body.board-writing{
-    overflow:hidden;
-    overscroll-behavior:none;
-  }
-  body.board-writing, body.board-writing *{
-    touch-action:none !important;
   }
   .board-note{
     position:absolute;
@@ -506,7 +500,7 @@
         </div>
       </div>
       <div class="drawing-surface">
-        <canvas id="scratchCanvas" tabindex="0" aria-label="Scratch board. Draw with Apple Pencil or a pointer, and use the eraser tool to remove marks."></canvas>
+        <canvas id="scratchCanvas" aria-label="Scratch board. Draw with Apple Pencil or a pointer, and use the eraser tool to remove marks."></canvas>
         <span class="board-note" id="boardNote">Draw or erase</span>
       </div>
     </section>
@@ -1225,6 +1219,9 @@ let boardTool = 'pen';
 let boardColor = '#17283A';
 let drawing = false;
 let activeBoardPointer = null;
+let activeBoardPointerType = null;
+let activeBoardTouch = null;
+let pencilTouchInput = false;
 let pencilDetected = false;
 let suppressClicksUntil = 0;
 let inputLockActive = false;
@@ -1268,17 +1265,16 @@ function pressureWidth(event, erasing = false){
 
 function engageInputShield(){
   inputLockActive = true;
-  document.body.classList.add('board-writing');
 }
 
 function releaseInputShield(){
   suppressClicksUntil = performance.now() + 420;
   inputLockActive = false;
-  document.body.classList.remove('board-writing');
 }
 
 function blockCompetingPointer(event){
   if (!inputLockActive) return;
+  if (pencilTouchInput && event.pointerType === 'pen' && event.target === canvas) return;
   if (activeBoardPointer !== null && event.pointerId === activeBoardPointer) return;
   // A missed pointerup must never leave the next Pencil stroke locked out.
   if (event.type === 'pointerdown' && event.pointerType === 'pen' && event.target === canvas){
@@ -1339,72 +1335,148 @@ document.getElementById('clearBoardButton').addEventListener('click', () => {
   boardNote.textContent = boardTool === 'eraser' ? 'Board cleared · drag to erase' : 'Board cleared · ready to draw';
 });
 
-canvas.addEventListener('pointerdown', event => {
-  if (activeBoardPointer !== null && activeBoardPointer !== event.pointerId) return;
-  event.preventDefault();
-  const point = boardPoint(event);
-  if (event.pointerType === 'pen'){
-    pencilDetected = true;
-    boardNote.textContent = 'Pencil-only drawing active · palm touches are blocked';
-  } else if (pencilDetected && event.pointerType === 'touch'){
-    boardNote.textContent = 'Use Apple Pencil to draw · fingers still operate the controls';
-    return;
-  }
-
+function beginBoardStroke(sample){
+  const point = boardPoint(sample);
   drawing = true;
-  activeBoardPointer = event.pointerId;
-  if (typeof canvas.setPointerCapture === 'function'){
-    try { canvas.setPointerCapture(event.pointerId); } catch (_) {}
-  }
   engageInputShield();
   boardContext.globalCompositeOperation = boardTool === 'eraser' ? 'destination-out' : 'source-over';
   boardContext.strokeStyle = boardColor;
   boardContext.fillStyle = boardColor;
-  boardContext.lineWidth = pressureWidth(event, boardTool === 'eraser');
+  boardContext.lineWidth = pressureWidth(sample, boardTool === 'eraser');
   boardContext.beginPath();
   boardContext.moveTo(point.x, point.y);
   boardContext.lineTo(point.x + .01, point.y + .01);
   boardContext.stroke();
+}
+
+function extendBoardStroke(sample){
+  const point = boardPoint(sample);
+  boardContext.globalCompositeOperation = boardTool === 'eraser' ? 'destination-out' : 'source-over';
+  boardContext.strokeStyle = boardColor;
+  boardContext.lineWidth = pressureWidth(sample, boardTool === 'eraser');
+  boardContext.lineTo(point.x, point.y);
+  boardContext.stroke();
+  boardContext.beginPath();
+  boardContext.moveTo(point.x, point.y);
+}
+
+function markPencilInput(){
+  pencilDetected = true;
+  boardNote.textContent = 'Pencil-only drawing active · palm touches are blocked';
+}
+
+canvas.addEventListener('pointerdown', event => {
+  // Safari also sends pointer events for a native Pencil touch. Use only one stream.
+  if (event.pointerType === 'pen' && pencilTouchInput) return;
+  if (activeBoardTouch !== null || (activeBoardPointer !== null && activeBoardPointer !== event.pointerId)) return;
+  event.preventDefault();
+  if (event.pointerType === 'pen') markPencilInput();
+  else if (pencilDetected && event.pointerType === 'touch') return;
+  activeBoardPointer = event.pointerId;
+  activeBoardPointerType = event.pointerType;
+  // Touch and pen already receive implicit capture. Avoid re-capturing Pencil on iPad.
+  if (event.pointerType === 'mouse' && typeof canvas.setPointerCapture === 'function'){
+    try {canvas.setPointerCapture(event.pointerId);} catch (_) {}
+  }
+  beginBoardStroke(event);
 });
 
 canvas.addEventListener('pointermove', event => {
+  if (activeBoardTouch !== null || (event.pointerType === 'pen' && pencilTouchInput)) return;
+  // Recover contact after a dropped pointerdown, but never turn Pencil hover into ink.
+  if (!drawing && event.pointerType === 'pen' && (event.buttons & 1) !== 0){
+    activeBoardPointer = event.pointerId;
+    activeBoardPointerType = event.pointerType;
+    markPencilInput();
+    beginBoardStroke(event);
+  }
   if (!drawing || event.pointerId !== activeBoardPointer) return;
   event.preventDefault();
   const coalesced = typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [];
   const samples = coalesced.length ? coalesced : [event];
-  samples.forEach(sample => {
-    const point = boardPoint(sample);
-    boardContext.globalCompositeOperation = boardTool === 'eraser' ? 'destination-out' : 'source-over';
-    boardContext.strokeStyle = boardColor;
-    boardContext.lineWidth = pressureWidth(sample, boardTool === 'eraser');
-    boardContext.lineTo(point.x, point.y);
-    boardContext.stroke();
-    boardContext.beginPath();
-    boardContext.moveTo(point.x, point.y);
-  });
+  samples.forEach(extendBoardStroke);
 });
 
 function stopDrawing(event){
-  if (!drawing || (event && activeBoardPointer !== null && event.pointerId !== activeBoardPointer)) return;
+  if (!drawing || (event && (activeBoardTouch !== null || event.pointerId !== activeBoardPointer))) return;
   const finishedPointer = activeBoardPointer;
+  const finishedPointerType = activeBoardPointerType;
   drawing = false;
   activeBoardPointer = null;
+  activeBoardPointerType = null;
+  activeBoardTouch = null;
   boardContext.closePath();
-  if (finishedPointer !== null && typeof canvas.hasPointerCapture === 'function' &&
+  if (finishedPointerType === 'mouse' && finishedPointer !== null && typeof canvas.hasPointerCapture === 'function' &&
       typeof canvas.releasePointerCapture === 'function' && canvas.hasPointerCapture(finishedPointer)){
     try { canvas.releasePointerCapture(finishedPointer); } catch (_) {}
   }
   releaseInputShield();
 }
 
-canvas.addEventListener('pointerup', stopDrawing);
-canvas.addEventListener('pointercancel', stopDrawing);
+// Finish even if Safari sends the lift outside the canvas or capture is lost.
+document.addEventListener('pointerup', stopDrawing, true);
+document.addEventListener('pointercancel', stopDrawing, true);
 canvas.addEventListener('pointerleave', event => {
   if (event.buttons === 0) stopDrawing(event);
 });
 canvas.addEventListener('lostpointercapture', event => {
-  if (drawing && event.pointerId === activeBoardPointer) stopDrawing(event);
+  // A late capture-loss notification from a previous Pencil stroke must not end
+  // the next one when Safari reuses the same pointer ID.
+  if (drawing && activeBoardPointerType === 'mouse' && event.pointerId === activeBoardPointer &&
+      !canvas.hasPointerCapture(event.pointerId)) stopDrawing(event);
 });
+
+function pencilTouchSample(touch){
+  return {clientX:touch.clientX,clientY:touch.clientY,pointerType:'pen',pressure:touch.force || .5};
+}
+
+// WebKit exposes Apple Pencil contacts as stylus TouchEvents. Cancel the native
+// gesture at touchstart, not just pointerdown, and finish from the Pencil's own
+// touchend. A resting palm must not keep the next stroke waiting for all fingers.
+document.addEventListener('touchstart', event => {
+  const changed = Array.from(event.changedTouches);
+  const pencil = changed.find(touch => touch.target === canvas && touch.touchType === 'stylus');
+  if (pencil){
+    if (event.cancelable) event.preventDefault();
+    pencilTouchInput = true;
+    markPencilInput();
+    if (drawing && activeBoardPointerType === 'pen'){
+      // Adopt the first pointer stroke without drawing it twice.
+      activeBoardPointer = null;
+      activeBoardPointerType = null;
+      activeBoardTouch = pencil.identifier;
+    } else {
+      stopDrawing();
+      activeBoardTouch = pencil.identifier;
+      beginBoardStroke(pencilTouchSample(pencil));
+    }
+    return;
+  }
+  if (inputLockActive || changed.some(touch => touch.target === canvas)){
+    if (event.cancelable) event.preventDefault();
+    if (inputLockActive) event.stopImmediatePropagation();
+  }
+}, {capture:true,passive:false});
+
+document.addEventListener('touchmove', event => {
+  const changed = Array.from(event.changedTouches);
+  const pencil = changed.find(touch => touch.identifier === activeBoardTouch);
+  if (inputLockActive || changed.some(touch => touch.target === canvas)){
+    if (event.cancelable) event.preventDefault();
+  }
+  if (pencil && drawing) extendBoardStroke(pencilTouchSample(pencil));
+  else if (inputLockActive) event.stopImmediatePropagation();
+}, {capture:true,passive:false});
+
+function finishPencilTouch(event){
+  const pencil = Array.from(event.changedTouches).find(touch => touch.identifier === activeBoardTouch);
+  if (!pencil) return;
+  if (event.cancelable) event.preventDefault();
+  if (event.type === 'touchend') extendBoardStroke(pencilTouchSample(pencil));
+  stopDrawing();
+}
+document.addEventListener('touchend', finishPencilTouch, {capture:true,passive:false});
+document.addEventListener('touchcancel', finishPencilTouch, {capture:true,passive:false});
 
 window.addEventListener('blur', () => {
   stopDrawing();

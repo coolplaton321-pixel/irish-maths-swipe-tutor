@@ -112,7 +112,7 @@
   }
   .prompt{
     font-family:var(--display);
-    font-size:clamp(23px,4.9vw,29px);
+    font-size:clamp(18.4px,3.92vw,23.2px);
     line-height:1.38;
     margin:0;
     font-weight:600;
@@ -473,7 +473,7 @@
 
 <div class="mode-actions">
   <button type="button" class="test-launch active" id="testButton" aria-pressed="true">Test <span id="testCount">10 questions</span></button>
-  <button type="button" class="test-launch" id="appliedButton" aria-pressed="false">Applied arithmetic <span id="appliedCount">10 questions</span></button>
+  <button type="button" class="test-launch" id="appliedButton" aria-pressed="false">Applied arithmetic <span id="appliedCount">30 questions</span></button>
 </div>
 
 <div class="top" id="hud">
@@ -775,7 +775,187 @@ const QUESTION_BANKS = {
       theory:"Time-and-a-half means 1.5 times the normal hourly rate. A deduction leaves 1 minus the deduction rate.",
       example:"At EUR 12 per hour, 4 hours at time-and-a-half pays 4 x 18 = EUR 72.",
       terms:[{w:"gross pay", d:"earnings before deductions", ua:"total before deductions"},
-             {w:"net pay", d:"earnings remaining after deductions", ua:"take-home pay"}] }
+             {w:"net pay", d:"earnings remaining after deductions", ua:"take-home pay"}] },
+
+    { task:"Applied Arithmetic · Hard · Reverse VAT", tense:"num", difficulty:"hard",
+      prompt:"A desk's pre-VAT price has $23%$ VAT added. The VAT-inclusive price is then reduced by $10%$, followed by a further $5%$. The customer pays $EUR 841.32$. Find the original pre-VAT price.",
+      context:"Reverse all three multipliers, not just the last discount.",
+      answer:"The combined multiplier is $1.23 x 0.90 x 0.95 = 1.05165$. Original pre-VAT price: $841.32/1.05165 = EUR 800$. Check: $800 x 1.23 x 0.90 x 0.95 = EUR 841.32$.",
+      theory:"Successive percentage changes multiply. To recover an original amount, divide the final amount by the product of the multipliers.",
+      example:"After 20% VAT and a 25% discount, a EUR 100 pre-tax price becomes 100 x 1.20 x 0.75 = EUR 90.",
+      terms:[{w:"successive discounts", d:"discounts applied one after another to the latest price", ua:"multiply the remaining fractions"},
+             {w:"pre-VAT price", d:"the price before VAT is added", ua:"tax-exclusive price"}] },
+
+    { task:"Applied Arithmetic · Hard · Profit Margin", tense:"num", difficulty:"hard",
+      prompt:"An item costs a shop $EUR 68$. The shop will discount its marked price by $15%$, but still wants profit equal to $20%$ of the actual selling price. Ignore VAT. Find the marked price and the profit after the discount.",
+      context:"A 20% profit margin leaves cost equal to 80% of the selling price.",
+      answer:"Actual selling price: $68/0.80 = EUR 85$. Marked price: $85/0.85 = EUR 100$. Profit after the discount: $85 - 68 = EUR 17$. Check: $17/85 = 20%$.",
+      theory:"Profit margin is profit divided by selling price, unlike mark-up, which uses cost price. First meet the required margin, then reverse the planned discount.",
+      example:"A EUR 60 cost with a 25% profit margin needs a selling price of 60/0.75 = EUR 80, not EUR 75.",
+      terms:[{w:"profit margin", d:"profit as a percentage of the selling price", ua:"profit divided by selling price"},
+             {w:"marked price", d:"the advertised price before a discount", ua:"ticket price"}] },
+
+    { task:"Applied Arithmetic · Hard · Changing Balance", tense:"num", difficulty:"hard",
+      prompt:"$EUR 2,500$ is invested at $3.2%$ compound interest per year. Immediately after the first year's interest is added, another $EUR 500$ is deposited. No more money is added. Find the balance at the end of year $3$, to the nearest cent.",
+      context:"The extra EUR 500 earns interest for two years, not three.",
+      answer:"End of year 1: $2500 x 1.032 = EUR 2580$. After the deposit: $2580 + 500 = EUR 3080$. End of year 3: $3080 x (1.032)<sup>2</sup> = 3280.27392$, so the balance is $EUR 3,280.27$.",
+      theory:"Apply interest to the balance present in each period. A later deposit has fewer compounding periods; do not treat it as if it were invested at the start.",
+      example:"EUR 1000 at 5% becomes EUR 1050 after a year. Adding EUR 200 then gives a second-year balance of 1250 x 1.05 = EUR 1312.50.",
+      terms:[{w:"compound interest", d:"interest calculated on a balance that includes earlier interest", ua:"interest on interest"},
+             {w:"deposit timing", d:"when new money enters the account and begins earning interest", ua:"count its own interest periods"}] },
+
+    { task:"Applied Arithmetic · Hard · Depreciation Rate", tense:"num", difficulty:"hard",
+      prompt:"A machine originally costs $EUR 20,000$. After $3 years$ of depreciation at the same annual percentage rate, it is worth $EUR 14,580$. Find the annual depreciation rate, then its value after a further $2 years$ at that rate.",
+      context:"First find the annual remaining-value multiplier.",
+      answer:"Three-year multiplier: $14580/20000 = 0.729$. Since $0.90<sup>3</sup> = 0.729$, the annual multiplier is $0.90$ and depreciation is $10%$. After two more years: $14580 x 0.90<sup>2</sup> = EUR 11,809.80$.",
+      theory:"For a constant depreciation rate r, final/initial = (1 - r)<sup>n</sup>. Take the appropriate root to recover the annual multiplier, then subtract it from 1.",
+      example:"A value falls from EUR 1000 to EUR 640 in two years: the annual multiplier is sqrt(0.64) = 0.8, so depreciation is 20% per year.",
+      terms:[{w:"annual rate", d:"the percentage change applied once each year", ua:"yearly percentage"},
+             {w:"remaining-value multiplier", d:"the fraction of the value retained after one year's depreciation", ua:"1 minus the depreciation rate"}] },
+
+    { task:"Applied Arithmetic · Hard · Net Pay", tense:"num", difficulty:"hard",
+      prompt:"A worker earns $EUR 18/hour$ for $38 hours$, plus $6 overtime hours$ at time-and-a-half. Pension is $4%$ of gross pay and is deducted before tax. In this fictional weekly tax scheme, the first $EUR 600$ of taxable pay is taxed at $20%$ and the rest at $40%$. A $EUR 50$ tax credit reduces tax. Insurance is $2%$ of gross pay. Find net pay, rounding only at the end.",
+      context:"Pension reduces taxable pay; insurance does not. A tax credit reduces tax, not taxable pay.",
+      answer:"Gross: $38 x 18 + 6 x 27 = EUR 846$. Pension: $846 x 0.04 = EUR 33.84$; taxable pay: $846 - 33.84 = EUR 812.16$. Tax: $600 x 0.20 + 212.16 x 0.40 - 50 = EUR 154.864$. Insurance: $846 x 0.02 = EUR 16.92$. Net: $846 - 33.84 - 154.864 - 16.92 = EUR 640.38$ to the nearest cent.",
+      theory:"Build gross pay first. Calculate deductions on their stated bases, apply tax bands only to taxable pay, then subtract a tax credit from the tax due. Finally subtract all deductions from gross pay.",
+      example:"If gross pay is EUR 800 and a EUR 40 pension is tax-deductible, taxable pay is EUR 760. A EUR 30 tax credit reduces the calculated tax by EUR 30.",
+      terms:[{w:"taxable pay", d:"pay remaining after deductions allowed before tax", ua:"the amount tax bands apply to"},
+             {w:"tax credit", d:"an amount subtracted from calculated tax rather than from income", ua:"reduces tax due"}] },
+
+    { task:"Applied Arithmetic · Hard · Stock Clearance", tense:"num", difficulty:"hard",
+      prompt:"A shop buys $120$ items at $EUR 18$ each, excluding VAT. It sells $90$ at $EUR 36.90$ each including $23%$ VAT. The other $30$ sell at $20%$ off that VAT-inclusive price. All sales VAT is passed on, and there are no other costs. Find total profit and profit as a percentage of the purchase cost, to two decimal places.",
+      context:"Remove sales VAT before calculating the shop's revenue and profit.",
+      answer:"Full-price revenue excluding VAT: $90 x (36.90/1.23) = EUR 2700$. Discounted revenue: $30 x (36.90 x 0.80/1.23) = EUR 720$. Purchase cost: $120 x 18 = EUR 2160$. Profit: $2700 + 720 - 2160 = EUR 1260$. Percentage profit: $1260/2160 x 100 = 58.33%$.",
+      theory:"VAT collected for the tax authority is not profit. Compare VAT-exclusive revenue with VAT-exclusive costs, then use the specified cost base for percentage profit.",
+      example:"An item sold for EUR 24.60 including 23% VAT gives EUR 20 sales revenue. If it cost EUR 16 excluding VAT, profit is EUR 4, or 25% of cost.",
+      terms:[{w:"sales revenue", d:"money earned from sales, excluding VAT in this question", ua:"the shop's sales income"},
+             {w:"percentage profit", d:"profit divided by purchase cost, multiplied by 100", ua:"profit measured against cost"}] },
+
+    { task:"Applied Arithmetic · Hard · Currency Fees", tense:"num", difficulty:"hard",
+      prompt:"A traveller has a total budget of $EUR 1,000$ to exchange into dollars. An agency charges a fixed $EUR 4$ fee plus commission equal to $1.5%$ of the euro amount actually exchanged. The quoted rate is $EUR 1 = USD 1.09$. Fees must fit inside the budget. How many dollars are received? Round only the final answer to cents.",
+      context:"After the fixed fee, the remaining budget includes both the exchange amount and its commission.",
+      answer:"After the fixed fee: $1000 - 4 = EUR 996$. If x euro is exchanged, $1.015x = 996$, so $x = 996/1.015$. Dollars received: $(996/1.015) x 1.09 = USD 1069.596059...$, or $USD 1,069.60$.",
+      theory:"A budget including a percentage fee is not the same as the amount converted. Subtract fixed fees first, then divide by 1 plus the commission rate before using the exchange rate.",
+      example:"With a EUR 510 total budget and 2% commission on the amount converted, the conversion amount is 510/1.02 = EUR 500.",
+      terms:[{w:"fixed fee", d:"a set charge independent of the amount exchanged", ua:"subtract it before conversion"},
+             {w:"commission base", d:"the amount the percentage fee is calculated from", ua:"the amount actually exchanged"}] },
+
+    { task:"Applied Arithmetic · Hard · Changing Mixture", tense:"num", difficulty:"hard",
+      prompt:"A $30 litre$ mixture has juice and water in the ratio $3:2$. Another $6 litres$ of pure juice is added. How much water must then be added to make the final ratio of juice to water $1:2$? What is the final volume?",
+      context:"Track juice and water separately after each addition.",
+      answer:"Initially juice is $30 x 3/5 = 18 L$ and water is $12 L$. After adding juice: $24 L$ juice and $12 L$ water. A $1:2$ ratio needs $48 L$ water, so add $48 - 12 = 36 L$. Final volume: $24 + 48 = 72 L$.",
+      theory:"A changed mixture needs a new ratio based on the updated quantities. Work with the actual component amounts, not just the total volume or the original ratio.",
+      example:"A mixture with 4 L juice and 6 L water needs another 2 L water to become a 1:2 juice-to-water mixture.",
+      terms:[{w:"component", d:"one of the substances making up a mixture", ua:"juice or water separately"},
+             {w:"final ratio", d:"the required comparison after all additions", ua:"use the updated amounts"}] },
+
+    { task:"Applied Arithmetic · Hard · Redistributing Shares", tense:"num", difficulty:"hard",
+      prompt:"Nora, Liam and Sam share $EUR 960$ in the ratio $5:3:2$. Nora then gives some of her money to Sam so that Nora's and Sam's amounts are in the ratio $2:1$. Liam's money stays unchanged. How much is transferred, and how much does each person finish with?",
+      context:"The transfer changes two shares but not their combined total.",
+      answer:"Initial shares: Nora $EUR 480$, Liam $EUR 288$, Sam $EUR 192$. Nora and Sam together have $EUR 672$. Their final $2:1$ shares are $EUR 448$ and $EUR 224$. Nora transfers $480 - 448 = EUR 32$. Final shares: $EUR 448$, $EUR 288$, $EUR 224$.",
+      theory:"When money moves between two people, their combined total is unchanged. Share that total in the new ratio and compare it with the original amounts.",
+      example:"Two people with EUR 80 and EUR 40 have EUR 120 together. Making their shares equal requires a EUR 20 transfer, leaving EUR 60 each.",
+      terms:[{w:"transfer", d:"money moved from one person's share to another's", ua:"one loses exactly what the other gains"},
+             {w:"unchanged total", d:"the combined amount that stays constant during redistribution", ua:"share it using the new ratio"}] },
+
+    { task:"Applied Arithmetic · Hard · Whole-Journey Speed", tense:"num", difficulty:"hard",
+      prompt:"A journey starts at $08:35$. The first $36 km$ is travelled at $48 km/h$, followed by a $15 minute$ stop. The final $24 km$ is travelled at $32 km/h$. Find the arrival time and the average speed for the whole journey, including the stop, to two decimal places.",
+      context:"Average speed uses total distance divided by total elapsed time, not the mean of the two speeds.",
+      answer:"First leg: $36/48 = 0.75 h = 45 min$. Second leg: $24/32 = 0.75 h = 45 min$. Total time: $45 + 15 + 45 = 105 min = 1.75 h$. Arrival: $10:20$. Whole-journey average: $60/1.75 = 34.29 km/h$.",
+      theory:"Calculate each journey time separately, include any stops required by the question, and convert the complete elapsed time into hours before calculating average speed.",
+      example:"A 40 km journey taking 30 minutes of travel plus a 10-minute stop has average speed 40/(40/60) = 60 km/h including the stop.",
+      terms:[{w:"elapsed time", d:"the full time from departure to arrival, including stops", ua:"total journey time"},
+             {w:"whole-journey average", d:"total distance divided by total elapsed time", ua:"do not average the speed values"}] },
+
+    { task:"Applied Arithmetic · Hard · Journey Deadline", tense:"num", difficulty:"hard",
+      prompt:"A $180 km$ journey must take exactly $3 hours$, including a $15 minute$ break. The first $60 km$ takes place at $40 km/h$. In this idealised journey model, what average speed is needed for the remaining distance to arrive on time?",
+      context:"Subtract the first leg and the break from the total time allowance.",
+      answer:"First leg: $60/40 = 1.5 h$. Break: $15/60 = 0.25 h$. Remaining time: $3 - 1.5 - 0.25 = 1.25 h$. Remaining distance: $180 - 60 = 120 km$. Required average: $120/1.25 = 96 km/h$.",
+      theory:"A deadline question fixes the total elapsed time. Deduct time already spent and planned stops, then divide the remaining distance by the remaining travel time.",
+      example:"With 50 km left and 40 minutes available, the required average is 50/(40/60) = 75 km/h in an idealised model.",
+      terms:[{w:"time allowance", d:"the total time available before the deadline", ua:"include all breaks"},
+             {w:"required average", d:"remaining distance divided by remaining travel time", ua:"the model's target speed"}] },
+
+    { task:"Applied Arithmetic · Hard · Mixed-Route Fuel", tense:"num", difficulty:"hard",
+      prompt:"A car travels $420 km$: $30%$ on urban roads using $8 L per 100 km$, and the rest using $6 L per 100 km$. It starts with $12 L$ and must finish with $10 L$ in the tank. Fuel bought costs $EUR 1.85/L$. Find fuel used, the minimum fuel to buy, and its cost to the nearest cent.",
+      context:"Separate the two road types, then account for the starting fuel and required reserve.",
+      answer:"Urban: $126 km$, using $126 x 8/100 = 10.08 L$. Other roads: $294 km$, using $294 x 6/100 = 17.64 L$. Total used: $27.72 L$. Minimum purchase: $27.72 + 10 - 12 = 25.72 L$. Cost: $25.72 x 1.85 = EUR 47.58$ to the nearest cent.",
+      theory:"Calculate consumption for each distance using its own rate. Fuel bought = fuel used + required ending reserve - starting fuel, provided this is positive.",
+      example:"A trip uses 20 L, starts with 7 L and needs a 5 L ending reserve. The minimum purchase is 20 + 5 - 7 = 18 L.",
+      terms:[{w:"consumption", d:"fuel used during the journey", ua:"calculate each road type separately"},
+             {w:"reserve", d:"fuel required to remain after the journey", ua:"ending tank balance"}] },
+
+    { task:"Applied Arithmetic · Hard · Tiered Bill", tense:"num", difficulty:"hard",
+      prompt:"In a fictional tariff, a household uses $600 kWh$. The first $250 kWh$ cost $EUR 0.24$ each; the rest cost $EUR 0.31$ each. An $8%$ discount applies to the usage charge only. A $EUR 19$ standing charge is then added, and $13.5%$ VAT applies to the whole bill. Find the total, rounding only at the end.",
+      context:"The discount does not apply to the standing charge; VAT does.",
+      answer:"Usage before discount: $250 x 0.24 + 350 x 0.31 = EUR 168.50$. Discounted usage: $168.50 x 0.92 = EUR 155.02$. Before VAT: $155.02 + 19 = EUR 174.02$. Total: $174.02 x 1.135 = EUR 197.51$ to the nearest cent.",
+      theory:"Apply each tariff band to the correct number of units. Keep fixed and variable charges separate so that discounts and taxes use the bases specified in the question.",
+      example:"If usage costs EUR 80 and the fixed charge is EUR 10, a 10% discount on usage alone gives 80 x 0.90 + 10 = EUR 82 before tax.",
+      terms:[{w:"tiered tariff", d:"different unit prices for different bands of usage", ua:"split the units between price bands"},
+             {w:"standing charge", d:"a fixed charge not determined by the number of units used", ua:"add it separately"}] },
+
+    { task:"Applied Arithmetic · Hard · Filling with a Leak", tense:"num", difficulty:"hard",
+      prompt:"An empty tank holds $900 L$. Pipe A supplies $18 L/min$, pipe B supplies $12 L/min$, and a leak drains $5 L/min$ throughout filling. Pipe A starts alone. After $10 minutes$, pipe B is also turned on. At these constant rates, how long from the start until the tank is full? Give minutes and seconds.",
+      context:"Use the net filling rate in each of the two stages.",
+      answer:"First 10 minutes: net rate $18 - 5 = 13 L/min$, adding $130 L$. Remaining volume: $900 - 130 = 770 L$. With both pipes: net rate $18 + 12 - 5 = 25 L/min$. Extra time: $770/25 = 30.8 min = 30 min 48 s$. Total: $40 min 48 s$.",
+      theory:"Rates into a container add, and rates out subtract. When a pipe starts later, split the process into stages and use the remaining volume for the second stage.",
+      example:"An inlet adds 10 L/min and a leak removes 2 L/min. The net rate is 8 L/min, so 80 L takes 10 minutes.",
+      terms:[{w:"net rate", d:"total inflow minus total outflow", ua:"the amount actually added each minute"},
+             {w:"remaining volume", d:"the amount still needed after the first stage", ua:"capacity minus volume already added"}] },
+
+    { task:"Applied Arithmetic · Hard · Bulk Offer", tense:"num", difficulty:"hard",
+      prompt:"A caterer needs $180 g$ of rice for each of $40 people$. Shop A sells $750 g$ packs for $EUR 4.35$ with 'buy 3, pay for 2' on each complete group of three. Shop B sells $1.2 kg$ packs for $EUR 6.84$ with no offer. Whole packs must be bought. Which shop has the lower total cost, and how much rice is left over from that purchase?",
+      context:"Round the number of packs up before applying the promotion.",
+      answer:"Rice needed: $40 x 180 = 7200 g = 7.2 kg$. A needs $10$ packs: three groups of three plus one, so pay for $7$. Cost: $7 x 4.35 = EUR 30.45$; bought $7.5 kg$, leaving $0.3 kg = 300 g$. B needs $6$ packs costing $6 x 6.84 = EUR 41.04$. Shop A is cheaper by $EUR 10.59$.",
+      theory:"For a fixed requirement, compare the cost of enough whole packs, not just the advertised unit prices. Promotions apply only to eligible complete groups.",
+      example:"If 2.1 kg is needed and packs hold 500 g, buy 5 packs. With buy 3, pay for 2, only one group of three qualifies, so pay for 4 packs.",
+      terms:[{w:"whole-pack constraint", d:"packs cannot be bought in fractional quantities", ua:"round the pack count up"},
+             {w:"qualifying group", d:"a complete set of packs to which a promotion applies", ua:"count complete groups of three"}] },
+
+    { task:"Applied Arithmetic · Hard · Hire Purchase", tense:"num", difficulty:"hard",
+      prompt:"A bicycle has a list price of $EUR 1,800$. Paying cash earns a $5%$ discount. Alternatively, hire purchase requires a deposit of $15%$ of the list price plus $24 monthly payments$ of $EUR 72$. There are no other charges. Find the hire-purchase total and how much more it costs than the cash offer, as a percentage of the cash price to two decimal places.",
+      context:"Use the discounted cash price as the base for the percentage comparison.",
+      answer:"Cash price: $1800 x 0.95 = EUR 1710$. Deposit: $1800 x 0.15 = EUR 270$. Hire-purchase total: $270 + 24 x 72 = EUR 1998$. Extra cost: $1998 - 1710 = EUR 288$. Percentage extra: $288/1710 x 100 = 16.84%$.",
+      theory:"Hire-purchase total is deposit plus all instalments. A percentage comparison must use the price of the alternative named in the question; it is not an annual interest rate.",
+      example:"A EUR 100 deposit plus 12 payments of EUR 45 totals EUR 640. Compared with a EUR 500 cash price, the extra cost is 140/500 x 100 = 28%.",
+      terms:[{w:"hire purchase", d:"paying a deposit followed by instalments for an item", ua:"add every payment"},
+             {w:"comparison base", d:"the price used as the denominator in a percentage comparison", ua:"use the cash offer here"}] },
+
+    { task:"Applied Arithmetic · Hard · Purchasing Power", tense:"num", difficulty:"hard",
+      prompt:"A person's annual income rises by $6%$. Over the same period, the price of an unchanged basket of goods rises by $8%$. By what percentage does the number of such baskets the income can buy change? State whether purchasing power rises or falls, to two decimal places.",
+      context:"Compare the income multiplier with the price multiplier; do not simply subtract the rates.",
+      answer:"Purchasing-power multiplier: $1.06/1.08 = 0.981481...$. Percentage change: $(1.06/1.08 - 1) x 100 = -1.851851...%$. Purchasing power falls by $1.85%$.",
+      theory:"The quantity affordable is income divided by price. Its percentage-change multiplier is the income multiplier divided by the price multiplier.",
+      example:"If income rises by 10% and the same goods cost 25% more, purchasing power changes by 1.10/1.25 = 0.88, a 12% fall.",
+      terms:[{w:"purchasing power", d:"the quantity of goods that an income can buy", ua:"income divided by price"},
+             {w:"real change", d:"a change after allowing for the change in prices", ua:"compare the two multipliers"}] },
+
+    { task:"Applied Arithmetic · Hard · Break-Even Event", tense:"num", difficulty:"hard",
+      prompt:"An event has a fixed cost of $EUR 480$, plus $EUR 7.50$ per attendee. Adult tickets cost $EUR 22$ and child tickets $EUR 14$. Adults and children attend in the exact ratio $3:2$, so attendance is a multiple of $5$. Find the minimum attendance that avoids a loss, and the profit at that attendance.",
+      context:"Work out the contribution from one group of three adults and two children.",
+      answer:"One group of five brings in $3 x 22 + 2 x 14 = EUR 94$ and costs $5 x 7.50 = EUR 37.50$ in attendee costs. Contribution: $EUR 56.50$ per group. $480/56.50 = 8.4955...$, so at least $9$ groups are needed: $45$ attendees ($27$ adults and $18$ children). Profit: $9 x 56.50 - 480 = EUR 28.50$.",
+      theory:"Revenue minus variable costs contributes towards the fixed cost. Divide the fixed cost by contribution per allowable group and round up to find the minimum feasible attendance.",
+      example:"With a EUR 100 fixed cost and EUR 12 contribution per group, 8 groups give only EUR 96. At least 9 groups are needed, giving EUR 8 profit.",
+      terms:[{w:"break-even", d:"revenue covers all costs so that there is no loss", ua:"profit is at least zero"},
+             {w:"contribution", d:"revenue minus variable costs before covering fixed costs", ua:"amount left towards the fixed cost"}] },
+
+    { task:"Applied Arithmetic · Hard · Competing Discounts", tense:"num", difficulty:"hard",
+      prompt:"Two shops have the same original price for a table. Shop A offers $20%$ off, then another $15%$ off the reduced price. Shop B offers $30%$ off, then a further $EUR 12$ off. Both final prices are equal. Find the original price and the common final price.",
+      context:"One offer combines two multipliers; the other combines a multiplier and a fixed reduction.",
+      answer:"Let the original price be p. A charges $0.80 x 0.85p = 0.68p$. B charges $0.70p - 12$. Set equal: $0.68p = 0.70p - 12$, so $0.02p = 12$ and $p = EUR 600$. Both final prices are $EUR 408$.",
+      theory:"Translate each offer into an expression based on the same original price. Equate those expressions and solve. Two successive discounts do not add as percentages.",
+      example:"A 10% discount followed by 20% off gives a multiplier of 0.90 x 0.80 = 0.72: a 28% discount overall, not 30%.",
+      terms:[{w:"equivalent offers", d:"different discount rules producing the same final price", ua:"set the price expressions equal"},
+             {w:"fixed reduction", d:"a stated currency amount subtracted from the price", ua:"not a percentage"}] },
+
+    { task:"Applied Arithmetic · Hard · Flooring Budget", tense:"num", difficulty:"hard",
+      prompt:"A rectangular floor is $6.4 m$ by $4.5 m$. A built-in cupboard covering $2.0 m$ by $1.2 m$ needs no flooring. Add $12%$ to the area to be covered for waste. Each whole flooring pack covers $1.35 m<sup>2</sup>$ and costs $EUR 32.40$. Buying at least $20 packs$ gives $10%$ off all packs. Find the number of packs and final cost.",
+      context:"Exclude the cupboard, allow for waste, round packs up, then apply any qualifying discount.",
+      answer:"Area to cover: $6.4 x 4.5 - 2.0 x 1.2 = 26.4 m<sup>2</sup>$. With waste: $26.4 x 1.12 = 29.568 m<sup>2</sup>$. Packs: $29.568/1.35 = 21.9022...$, so buy $22$. The discount applies: $22 x 32.40 x 0.90 = EUR 641.52$.",
+      theory:"A material estimate combines area, a percentage allowance, whole-pack rounding and a cost rule. Rounding down leaves too little material; apply a bulk discount only after checking eligibility.",
+      example:"A 10 m<sup>2</sup> surface plus 15% waste needs 11.5 m<sup>2</sup>. With 2 m<sup>2</sup> per pack, buy 6 packs, not 5.",
+      terms:[{w:"waste allowance", d:"extra material allowed for cuts, breakage or fitting", ua:"increase the required area"},
+             {w:"minimum order", d:"the purchase quantity needed to qualify for a discount", ua:"check the rounded pack count"}] }
   ],
 
   leaving: [

@@ -12,6 +12,7 @@ An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certifica
 - Pressure-sensitive black, red, and blue pens
 - Single-input Pencil lock that blocks palm and extra-finger touches while writing
 - Eraser for correcting work
+- Clear board button to erase all marks while keeping the selected drawing tool
 - Immediate consecutive drawing strokes with palm rejection while writing
 - Top-left menu switching between Students and the existing Grinds workspace
 - Jay's Junior Cycle Higher Level board with 48 topics across four strands

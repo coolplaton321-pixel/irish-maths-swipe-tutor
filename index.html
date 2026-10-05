@@ -504,6 +504,7 @@
           <button type="button" class="board-tool" data-color="#D94F45" aria-label="Red pen" title="Red pen"><span class="swatch red"></span></button>
           <button type="button" class="board-tool" data-color="#2F6F8F" aria-label="Blue pen" title="Blue pen"><span class="swatch blue"></span></button>
           <button type="button" class="board-tool" data-tool="eraser" aria-label="Eraser" title="Eraser"><span class="eraser-icon" aria-hidden="true"></span></button>
+          <button type="button" class="board-tool" id="clearBoardButton" title="Erase all marks">Clear board</button>
         </div>
       </div>
       <div class="drawing-surface">
@@ -1334,6 +1335,16 @@ document.querySelectorAll('.board-tool[data-color]').forEach(button => {
 
 document.querySelector('.board-tool[data-tool="eraser"]').addEventListener('click', event => {
   selectBoardTool('eraser', event.currentTarget);
+});
+
+document.getElementById('clearBoardButton').addEventListener('click', () => {
+  stopDrawing();
+  boardContext.save();
+  boardContext.setTransform(1, 0, 0, 1, 0, 0);
+  boardContext.clearRect(0, 0, canvas.width, canvas.height);
+  boardContext.restore();
+  boardContext.beginPath();
+  boardNote.textContent = boardTool === 'eraser' ? 'Board cleared · drag to erase' : 'Board cleared · ready to draw';
 });
 
 canvas.addEventListener('pointerdown', event => {

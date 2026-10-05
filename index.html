@@ -524,7 +524,7 @@
   <div id="studentBoard" hidden>
     <button type="button" class="back-students" id="backStudents" aria-label="All students" title="All students">←</button>
     <div class="student-heading">
-      <div><h1 id="studentName">Jay</h1><p class="page-intro" id="studentYear">Third year</p><span class="exam-tag">Junior Cycle · Higher Level</span></div>
+      <div><h1 id="studentName">Jay</h1><p class="page-intro" id="studentYear">Third year</p><span class="exam-tag" id="studentExam">Junior Cycle · Higher Level</span></div>
       <div class="progress-summary" aria-label="Topic progress" aria-live="polite"><div><strong id="topicTotal">0</strong><span>Topics</span></div><div><strong id="topicAssessed">0</strong><span>Assessed</span></div><div><strong id="topicConfident">0</strong><span>Confident</span></div></div>
     </div>
     <div class="topic-board" id="topicBoard"></div>
@@ -1506,20 +1506,20 @@ const KNOWLEDGE_LEVELS = [
   ['grey','Not assessed'],['red','Needs support'],['yellow','Developing'],['green','Confident']
 ];
 const STUDENTS = [
-  {id:'jay',name:'Jay'},
-  {id:'aoife',name:'Aoife'},
-  {id:'liam',name:'Liam'},
-  {id:'saoirse',name:'Saoirse'},
-  {id:'cian',name:'Cian'},
-  {id:'emma',name:'Emma'},
-  {id:'noah',name:'Noah'},
-  {id:'niamh',name:'Niamh'},
-  {id:'oisin',name:'Oisín'},
-  {id:'vladimir',name:'Vladimir'},
-  {id:'masha',name:'Masha'},
-  {id:'aarav',name:'Aarav'},
-  {id:'priya',name:'Priya'},
-  {id:'rohan',name:'Rohan'}
+  {id:'jay',name:'Jay',exam:'Junior Cycle · Higher Level',year:'Third year'},
+  {id:'aoife',name:'Aoife',exam:'Leaving Cert · Higher Level',year:'Sixth year'},
+  {id:'liam',name:'Liam',exam:'Junior Cycle · Ordinary Level',year:'Third year'},
+  {id:'saoirse',name:'Saoirse',exam:'Leaving Cert · Ordinary Level',year:'Sixth year'},
+  {id:'cian',name:'Cian',exam:'Junior Cycle · Higher Level',year:'Third year'},
+  {id:'emma',name:'Emma',exam:'Leaving Cert · Higher Level',year:'Fifth year'},
+  {id:'noah',name:'Noah',exam:'Junior Cycle · Ordinary Level',year:'Third year'},
+  {id:'niamh',name:'Niamh',exam:'Leaving Cert · Ordinary Level',year:'Fifth year'},
+  {id:'oisin',name:'Oisín',exam:'Junior Cycle · Higher Level',year:'Third year'},
+  {id:'vladimir',name:'Vladimir',exam:'Leaving Cert · Higher Level',year:'Sixth year'},
+  {id:'masha',name:'Masha',exam:'Leaving Cert · Ordinary Level',year:'Sixth year'},
+  {id:'aarav',name:'Aarav',exam:'Junior Cycle · Higher Level',year:'Third year'},
+  {id:'priya',name:'Priya',exam:'Leaving Cert · Higher Level',year:'Fifth year'},
+  {id:'rohan',name:'Rohan',exam:'Junior Cycle · Ordinary Level',year:'Third year'}
 ];
 const STUDENT_ORDER_KEY = 'irish-maths-tutor:student-order:v1';
 const ratingsByStudent = new Map();
@@ -1607,7 +1607,8 @@ function showAppView(){
     activeStudent = student;
     studentRatings = loadStudentRatings(student);
     document.getElementById('studentName').textContent = student.name;
-    document.getElementById('studentYear').textContent = student.id === 'jay' ? 'Third year' : 'Third year · Sample profile';
+    document.getElementById('studentYear').textContent = student.year;
+    document.getElementById('studentExam').textContent = student.exam;
     document.getElementById('knowledgeHeading').textContent = `${student.name}’s knowledge level`;
     updateTopicBoard();
   }
@@ -1634,7 +1635,7 @@ studentDirectoryOrder().forEach(student => {
   button.type = 'button';
   button.className = 'student-card';
   button.dataset.student = student.id;
-  button.innerHTML = `<span class="student-avatar" aria-hidden="true">${student.name.charAt(0)}</span><span><strong>${student.name}</strong><small>Junior Cycle · Higher Level${student.id !== 'jay' ? '<br>Sample profile' : ''}</small></span><span class="student-arrow" aria-hidden="true">↗</span>`;
+  button.innerHTML = `<span class="student-avatar" aria-hidden="true">${student.name.charAt(0)}</span><span><strong>${student.name}</strong><small>${student.exam}</small></span><span class="student-arrow" aria-hidden="true">↗</span>`;
   button.onclick = () => {location.hash = `students/${student.id}`;};
   studentList.appendChild(button);
 });

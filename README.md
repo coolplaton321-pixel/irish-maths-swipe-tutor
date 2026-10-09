@@ -6,6 +6,7 @@ An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certifica
 
 - Ten-question Higher Level Junior Cycle test, with five earlier questions archived for future restoration
 - Thirty-question applied-arithmetic set: the original ten plus twenty harder, multi-step questions covering percentages, margins, changing balances, tax bands, ratios, rates, bills, bulk offers and budgets
+- Separate Leaving Cert Differentiation button with ten ordered easy-to-medium questions: basic powers, negative and fractional powers, slope at a point, one limit-definition question, then product, quotient and chain rules. Each includes a worked solution, method and example; HL material is labelled.
 - Problem text on question cards reduced by 20% at every responsive size, without shrinking solutions or controls
 - Swipe-based self-assessment cards
 - Worked methods, examples, key terms, and solutions

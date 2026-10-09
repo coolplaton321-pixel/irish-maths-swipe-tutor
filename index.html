@@ -488,6 +488,7 @@
 <div class="mode-actions">
   <button type="button" class="test-launch active" id="testButton" aria-pressed="true">Test <span id="testCount">10 questions</span></button>
   <button type="button" class="test-launch" id="appliedButton" aria-pressed="false">Applied arithmetic <span id="appliedCount">30 questions</span></button>
+  <button type="button" class="test-launch" id="differentiationButton" aria-pressed="false" hidden>Differentiation <span id="differentiationCount">10 questions</span></button>
 </div>
 
 <div class="top" id="hud">
@@ -997,6 +998,80 @@ const QUESTION_BANKS = {
              {w:"minimum order", d:"the purchase quantity needed to qualify for a discount", ua:"check the rounded pack count"}] }
   ],
 
+  differentiation: [
+    { task:"Leaving Cert · Linear derivative · Easy", tense:"calc", difficulty:"easy",
+      prompt:"Find $f'(x)$ for $f(x) = 7x - 4$.",
+      answer:"The derivative of $7x$ is $7$, and the derivative of the constant $-4$ is $0$. Therefore $f'(x) = 7$.",
+      theory:"The derivative of ax is a. A constant has derivative 0.",
+      example:"If g(x) = 5x + 8, then g'(x) = 5.",
+      terms:[{w:"derivative", d:"the instantaneous rate of change of a function", ua:"slope function"},
+             {w:"constant", d:"a value that does not depend on x", ua:"derivative is zero"}] },
+
+    { task:"Leaving Cert · Quadratic derivative · Easy", tense:"calc", difficulty:"easy",
+      prompt:"Differentiate $y = 3x<sup>2</sup> - 5x + 2$.",
+      answer:"Differentiate each term: $dy/dx = 3(2x) - 5 + 0 = 6x - 5$.",
+      theory:"For ax<sup>n</sup>, multiply the coefficient by n and reduce the power by 1. Differentiate a sum term by term.",
+      example:"If y = 4x<sup>2</sup> + 2x - 9, then dy/dx = 8x + 2.",
+      terms:[{w:"power rule", d:"d/dx of ax to the power n is an times x to the power n minus 1", ua:"multiply by the power, then reduce it"}] },
+
+    { task:"Leaving Cert · Cubic derivative · Easy", tense:"calc", difficulty:"easy",
+      prompt:"Find $f'(x)$ for $f(x) = 2x<sup>3</sup> - 3x<sup>2</sup> + 4x - 7$.",
+      answer:"$f'(x) = 2(3x<sup>2</sup>) - 3(2x) + 4 = 6x<sup>2</sup> - 6x + 4$.",
+      theory:"Apply the power rule separately to each term, keeping the sign of its coefficient. The constant term disappears.",
+      example:"For g(x) = x<sup>3</sup> + 5x<sup>2</sup> - 2, g'(x) = 3x<sup>2</sup> + 10x.",
+      terms:[{w:"coefficient", d:"the number multiplying a power of x", ua:"keep its sign"}] },
+
+    { task:"Leaving Cert · Negative powers (HL) · Medium", tense:"calc", difficulty:"medium",
+      prompt:"Differentiate $f(x) = x<sup>4</sup> - 6/x$, where $x &ne; 0$.",
+      answer:"Rewrite $f(x) = x<sup>4</sup> - 6x<sup>-1</sup>$. Then $f'(x) = 4x<sup>3</sup> + 6x<sup>-2</sup> = 4x<sup>3</sup> + 6/x<sup>2</sup>$, for $x &ne; 0$.",
+      theory:"The power rule works for negative powers. Rewrite 1/x as x<sup>-1</sup> before differentiating; two negative factors produce a positive coefficient.",
+      example:"For y = 5/x<sup>2</sup> = 5x<sup>-2</sup>, dy/dx = -10x<sup>-3</sup> = -10/x<sup>3</sup>, for x &ne; 0.",
+      terms:[{w:"negative power", d:"a power that represents a reciprocal", ua:"x to minus 1 means 1/x"}] },
+
+    { task:"Leaving Cert · Square roots (HL) · Medium", tense:"calc", difficulty:"medium",
+      prompt:"Differentiate $y = 4&radic;x + 3x$, where $x &gt; 0$.",
+      answer:"Rewrite $y = 4x<sup>1/2</sup> + 3x$. Then $dy/dx = 2x<sup>-1/2</sup> + 3 = 2/&radic;x + 3$, for $x &gt; 0$.",
+      theory:"Rewrite a square root as x<sup>1/2</sup>. Multiply by 1/2 and subtract 1 from the power, giving x<sup>-1/2</sup>.",
+      example:"For y = 6&radic;x, dy/dx = 3/&radic;x, for x &gt; 0.",
+      terms:[{w:"fractional power", d:"a power used to represent a root", ua:"square root means power one half"}] },
+
+    { task:"Leaving Cert · Slope at a point · Medium", tense:"calc", difficulty:"medium",
+      prompt:"For $f(x) = x<sup>3</sup> - 2x<sup>2</sup> + x$, find $f'(2)$.",
+      answer:"First, $f'(x) = 3x<sup>2</sup> - 4x + 1$. Then $f'(2) = 3(2)<sup>2</sup> - 4(2) + 1 = 12 - 8 + 1 = 5$.",
+      theory:"Find the derivative function first, then substitute the given x-value. f'(2) is the slope at x = 2, not the height f(2).",
+      example:"If g(x) = x<sup>2</sup> + 3x, then g'(x) = 2x + 3 and g'(1) = 5.",
+      terms:[{w:"gradient", d:"the slope of the tangent to a curve at a point", ua:"evaluate the derivative"}] },
+
+    { task:"Leaving Cert · First principles (HL) · Medium", tense:"calc", difficulty:"medium",
+      prompt:"Using the limit definition, differentiate $f(x) = x<sup>2</sup> + 3x$.<br>$f'(x) = lim<sub>h &rarr; 0</sub> (f(x+h) - f(x))/h$.",
+      answer:"$f(x+h) = x<sup>2</sup> + 2xh + h<sup>2</sup> + 3x + 3h$. Subtract $f(x)$ to obtain $2xh + h<sup>2</sup> + 3h$. For $h &ne; 0$, $(f(x+h) - f(x))/h = 2x + h + 3$. Taking the limit as $h &rarr; 0$ gives $f'(x) = 2x + 3$.",
+      theory:"First principles defines the derivative as the limit of a difference quotient. Expand f(x+h), subtract f(x), cancel h while h is non-zero, then take the limit. Do not substitute h = 0 before simplifying.",
+      example:"For g(x) = x<sup>2</sup>, (g(x+h) - g(x))/h = (2xh + h<sup>2</sup>)/h = 2x + h. As h tends to 0, g'(x) = 2x.",
+      terms:[{w:"difference quotient", d:"the change in function value divided by the change in input", ua:"average rate of change"},
+             {w:"limit", d:"the value approached as h tends to zero", ua:"h approaches zero without dividing by zero"}] },
+
+    { task:"Leaving Cert · Product rule (HL) · Medium", tense:"calc", difficulty:"medium",
+      prompt:"Use the product rule to differentiate $y = (x<sup>2</sup> + 1)(3x - 2)$.",
+      answer:"Let $u = x<sup>2</sup> + 1$ and $v = 3x - 2$. Then $u' = 2x$ and $v' = 3$. The product rule gives $dy/dx = 2x(3x - 2) + 3(x<sup>2</sup> + 1) = 9x<sup>2</sup> - 4x + 3$.",
+      theory:"For y = uv, dy/dx = u'v + uv'. Differentiate one factor at a time and add the two terms; do not multiply the two derivatives.",
+      example:"For y = x(x + 4), dy/dx = 1(x + 4) + x(1) = 2x + 4.",
+      terms:[{w:"product rule", d:"the derivative rule for two functions multiplied together", ua:"u'v + uv'"}] },
+
+    { task:"Leaving Cert · Quotient rule (HL) · Medium", tense:"calc", difficulty:"medium",
+      prompt:"Use the quotient rule to differentiate $y = (x<sup>2</sup> + 1)/(x + 2)$, where $x &ne; -2$.",
+      answer:"Let $u = x<sup>2</sup> + 1$ and $v = x + 2$. Then $u' = 2x$ and $v' = 1$. So $dy/dx = (2x(x + 2) - (x<sup>2</sup> + 1))/(x + 2)<sup>2</sup> = (x<sup>2</sup> + 4x - 1)/(x + 2)<sup>2</sup>$, for $x &ne; -2$.",
+      theory:"For y = u/v, dy/dx = (u'v - uv')/v<sup>2</sup>, where v is non-zero. Keep the order of subtraction and square the entire denominator.",
+      example:"For y = x/(x + 1), dy/dx = ((x + 1) - x)/(x + 1)<sup>2</sup> = 1/(x + 1)<sup>2</sup>, for x &ne; -1.",
+      terms:[{w:"quotient rule", d:"the derivative rule for one function divided by another", ua:"(u'v - uv')/v squared"}] },
+
+    { task:"Leaving Cert · Chain rule (HL) · Medium", tense:"calc", difficulty:"medium",
+      prompt:"Use the chain rule to find $f'(x)$ for $f(x) = (2x - 3)<sup>4</sup>$.",
+      answer:"Let $u = 2x - 3$, so $f = u<sup>4</sup>$. Then $df/du = 4u<sup>3</sup>$ and $du/dx = 2$. Therefore $f'(x) = 4(2x - 3)<sup>3</sup>(2) = 8(2x - 3)<sup>3</sup>$.",
+      theory:"For a composite function, differentiate the outer function while keeping the inner function unchanged, then multiply by the derivative of the inner function.",
+      example:"For y = (3x + 1)<sup>2</sup>, dy/dx = 2(3x + 1)(3) = 6(3x + 1).",
+      terms:[{w:"chain rule", d:"the derivative rule for one function inside another", ua:"outer derivative times inner derivative"}] }
+  ],
+
   leaving: [
     { task:"Leaving Cert · Function Substitution", tense:"func",
       prompt:"If $f(x) = 2x<sup>2</sup> - 3x + 1$, find $f(-2)$.",
@@ -1146,7 +1221,8 @@ QUESTION_BANKS.junior = QUESTION_BANKS.junior
 const BANK_LABELS = {
   junior:"Junior Cycle",
   applied:"Applied arithmetic",
-  leaving:"Leaving Cert"
+  leaving:"Leaving Cert",
+  differentiation:"Differentiation"
 };
 let activeBank = 'junior';
 let QUESTIONS = QUESTION_BANKS[activeBank];
@@ -1390,6 +1466,9 @@ function showResult(){
 }
 
 /* ---------------- mode switching ---------------- */
+function examBankFor(bank){
+  return bank === 'applied' ? 'junior' : bank === 'differentiation' ? 'leaving' : bank;
+}
 function selectBank(bank){
   activeBank = bank;
   QUESTIONS = QUESTION_BANKS[activeBank];
@@ -1398,7 +1477,7 @@ function selectBank(bank){
   locked = false;
   topCard = null;
   document.querySelectorAll('.modes button').forEach(button => {
-    const selectedMode = activeBank === 'applied' ? 'junior' : activeBank;
+    const selectedMode = examBankFor(activeBank);
     button.classList.toggle('on', button.dataset.bank === selectedMode);
   });
   syncTestButton();
@@ -1413,21 +1492,29 @@ const testButton = document.getElementById('testButton');
 const testCount = document.getElementById('testCount');
 const appliedButton = document.getElementById('appliedButton');
 const appliedCount = document.getElementById('appliedCount');
+const differentiationButton = document.getElementById('differentiationButton');
+const differentiationCount = document.getElementById('differentiationCount');
 
 function syncTestButton(){
-  const juniorAreaActive = activeBank === 'junior' || activeBank === 'applied';
-  testButton.hidden = !juniorAreaActive;
+  const examBank = examBankFor(activeBank);
+  const juniorAreaActive = examBank === 'junior';
+  testButton.hidden = false;
   appliedButton.hidden = !juniorAreaActive;
-  testCount.textContent = `${QUESTION_BANKS.junior.length} questions`;
+  differentiationButton.hidden = juniorAreaActive;
+  testCount.textContent = `${QUESTION_BANKS[examBank].length} questions`;
   appliedCount.textContent = `${QUESTION_BANKS.applied.length} questions`;
-  testButton.classList.toggle('active', activeBank === 'junior');
+  differentiationCount.textContent = `${QUESTION_BANKS.differentiation.length} questions`;
+  testButton.classList.toggle('active', activeBank === examBank);
   appliedButton.classList.toggle('active', activeBank === 'applied');
-  testButton.setAttribute('aria-pressed', String(activeBank === 'junior'));
+  differentiationButton.classList.toggle('active', activeBank === 'differentiation');
+  testButton.setAttribute('aria-pressed', String(activeBank === examBank));
   appliedButton.setAttribute('aria-pressed', String(activeBank === 'applied'));
+  differentiationButton.setAttribute('aria-pressed', String(activeBank === 'differentiation'));
 }
 
-testButton.addEventListener('click', () => selectBank('junior'));
+testButton.addEventListener('click', () => selectBank(examBankFor(activeBank)));
 appliedButton.addEventListener('click', () => selectBank('applied'));
+differentiationButton.addEventListener('click', () => selectBank('differentiation'));
 
 /* ---------------- working board ---------------- */
 const canvas = document.getElementById('scratchCanvas');

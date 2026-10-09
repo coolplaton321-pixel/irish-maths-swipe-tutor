@@ -5,7 +5,7 @@
   "description": "Irish maths practice and private teacher progress tracking",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test scripts/test-curriculum.mjs"
+    "test": "node --test scripts/test-curriculum.mjs scripts/test-drills.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2"

@@ -1936,7 +1936,7 @@ function showAppView(){
     document.getElementById('knowledgeHeading').textContent = `${student.name}’s knowledge level`;
     renderTopicBoard(student);
     updateTopicBoard();
-    window.platoCloud?.updateStatus();
+    window.platoCloud?.updateStatus?.();
   }
   document.getElementById('grindsView').hidden = studentsActive;
   document.getElementById('studentsView').hidden = !studentsActive;
@@ -2094,6 +2094,6 @@ resizeBoard();
 render();
 </script>
 <script src="vendor/supabase.js" defer></script>
-<script src="cloud.js" defer></script>
+<script src="cloud.js?v=lc-boards-v1" defer></script>
 </body>
 </html>

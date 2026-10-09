@@ -59,10 +59,10 @@ test('David starts unassessed; old JC colours and order are preserved',()=>{
   assert.equal(run('studentDirectoryOrder().map(s=>s.id).slice(0,3).join(",")'),'jay,aoife,liam');
   assert.equal(run('studentDirectoryOrder().filter(s=>s.id==="david").length'),1);
   assert.ok(run('usesCloudRatings(STUDENTS[0])'));
-  assert.equal(run('usesCloudRatings(STUDENTS.find(s=>s.id==="david"))'),false);
+  assert.ok(run('usesCloudRatings(STUDENTS.find(s=>s.id==="david"))'));
 });
 
-test('David retains local ratings across a reload and separate teacher accounts',()=>{
+test('David keeps guest ratings separate from signed-in cloud state',()=>{
   const {run,values}=fixture();
   values.set('irish-maths-tutor:david:lc:v1','{"lc-integration":"yellow"}');
   assert.equal(run('loadStudentRatings(STUDENTS.find(s=>s.id==="david"))["lc-integration"]'),'yellow');
@@ -70,48 +70,114 @@ test('David retains local ratings across a reload and separate teacher accounts'
   assert.equal(run('Object.keys(loadStudentRatings(STUDENTS.find(s=>s.id==="david"))).length'),0);
   values.set('plato-maths-school:teacher-a:david:v1','{"lc-integration":"green"}');
   run('ratingsByStudent.clear();');
-  assert.equal(run('loadStudentRatings(STUDENTS.find(s=>s.id==="david"))["lc-integration"]'),'green');
+  assert.equal(run('Object.keys(loadStudentRatings(STUDENTS.find(s=>s.id==="david"))).length'),0);
+  assert.equal(values.get('plato-maths-school:teacher-a:david:v1'),'{"lc-integration":"green"}');
 });
 
-test('cloud reads more than 1000 rows, preserves legacy ratings and seeds only appropriate topics',async()=>{
-  const {context,run}=fixture();
+async function cloudFixture({rows=[],stored={},owner='teacher-test',restored=false}={}){
+  const {context,run,values}=fixture();
+  Object.entries(stored).forEach(([key,value])=>values.set(key,JSON.stringify(value)));
   const elements=new Map();
-  const rows=JSON.parse(run('JSON.stringify(STUDENTS.filter(usesCloudRatings).flatMap(s=>JUNIOR_HIGHER_STRANDS.flatMap(t=>t.topics.map(([id])=>({student_id:s.id,topic_id:id,rating:"green"})))))'));
-  rows.push({student_id:'vladimir',topic_id:'lc-z-tests',rating:'green'});
+  const events=new Map();
   let callback;
   let queries=0;
   const inserted=[];
-  const owner='teacher-test';
+  const writes=[];
   const client={
     from:()=>({
-      select:()=>({eq:(_column,value)=>{assert.equal(value,owner);return {
+      select:()=>({eq:(_column,value)=>({
         order(){return this;},
-        async range(start,end){queries++;return {data:[...rows].sort((a,b)=>a.student_id.localeCompare(b.student_id)||a.topic_id.localeCompare(b.topic_id)).slice(start,end+1),error:null};}
-      };}}),
-      upsert:async data=>{inserted.push(...data);rows.push(...data);return {error:null};}
+        async range(start,end){queries++;return {data:rows.filter(r=>r.owner_id===value).sort((a,b)=>a.student_id.localeCompare(b.student_id)||a.topic_id.localeCompare(b.topic_id)).slice(start,end+1),error:null};}
+      })}),
+      upsert:async (data,options)=>{
+        assert.equal(options.onConflict,'owner_id,student_id,topic_id');
+        data.forEach(row=>{
+          const existing=rows.find(r=>r.owner_id===row.owner_id && r.student_id===row.student_id && r.topic_id===row.topic_id);
+          if (!existing){rows.push({...row});inserted.push({...row});}
+          else if (!options.ignoreDuplicates){Object.assign(existing,row);writes.push({...row});}
+        });
+        return {error:null};
+      }
     }),
-    auth:{onAuthStateChange:fn=>{callback=fn;},getSession:async()=>({data:{session:null},error:null})}
+    auth:{onAuthStateChange:fn=>{callback=fn;},getSession:async()=>({data:{session:restored?{user:{id:owner}}:null},error:null})}
   };
   context.document={getElementById:id=>{
     if(!elements.has(id)) elements.set(id,{hidden:false,disabled:false,textContent:'',addEventListener(){}});
     return elements.get(id);
   },addEventListener(){}};
   Object.assign(context,{navigator:{onLine:true},setTimeout,setInterval:()=>0});
-  Object.assign(context.window,{supabase:{createClient:()=>client},addEventListener(){}});
+  Object.assign(context.window,{supabase:{createClient:()=>client},addEventListener:(type,fn)=>events.set(type,fn)});
   vm.runInContext('const topicDialog={open:false};function syncRatingOptions(){} function updateTopicBoard(){}',context);
   vm.runInContext(cloud,context);
   await new Promise(resolve=>setTimeout(resolve,0));
-  callback('SIGNED_IN',{user:{id:owner}});
+  if(!restored) callback('SIGNED_IN',{user:{id:owner}});
   for(let i=0;i<20 && !context.window.platoCloud.ownerId;i++) await new Promise(resolve=>setTimeout(resolve,5));
   for(let i=0;i<20 && context.window.platoCloud.loading;i++) await new Promise(resolve=>setTimeout(resolve,5));
   assert.equal(context.window.platoCloud.loading,false);
+  return {context,run,values,rows,inserted,writes,elements,events,queries};
+}
+
+test('cloud reads more than 1000 rows, preserves legacy ratings and seeds only appropriate topics',async()=>{
+  const {run:build}=fixture();
+  const rows=JSON.parse(build('JSON.stringify(STUDENTS.flatMap(s=>JUNIOR_HIGHER_STRANDS.flatMap(t=>t.topics.map(([id])=>({owner_id:"teacher-test",student_id:s.id,topic_id:id,rating:"green"})))))'));
+  rows.push({owner_id:'teacher-test',student_id:'vladimir',topic_id:'lc-z-tests',rating:'green'});
+  const {run,inserted,elements,queries}=await cloudFixture({rows});
   assert.ok(rows.length>1000);
   assert.ok(queries>=5);
   assert.equal(run('ratingsByStudent.get("vladimir")["lc-z-tests"]'),'green');
   assert.equal(run('ratingsByStudent.get("aoife").indices'),'green');
   assert.equal(run('ratingsByStudent.get("aoife")["lc-integration"]'),'grey');
   assert.equal(run('ratingsByStudent.get("saoirse")["lc-integration"]'),undefined);
-  assert.ok(inserted.every(row=>row.student_id!=='david' && row.owner_id===owner));
+  assert.ok(inserted.every(row=>row.owner_id==='teacher-test'));
+  assert.equal(inserted.filter(row=>row.student_id==='david').length,83);
+  assert.ok(inserted.filter(row=>row.student_id==='david').every(row=>row.rating==='grey'));
   assert.ok(inserted.every(row=>row.topic_id.startsWith('lc-')));
   assert.equal(elements.get('cloudStatus').textContent,'Colours saved to your account.');
+});
+
+test('David imports guest and current-owner colours without overwriting cloud or other accounts',async()=>{
+  const stored={
+    'irish-maths-tutor:david:lc:v1':{'lc-integration':'yellow','lc-indices':'red','lc-z-tests':'yellow','lc-binomial':'green'},
+    'plato-maths-school:teacher-test:david:v1':{'lc-integration':'green','lc-z-tests':'red','lc-indices':'invalid','not-a-topic':'green'},
+    'plato-maths-school:another-teacher:david:v1':{'lc-log-laws':'red'}
+  };
+  const remote={owner_id:'teacher-test',student_id:'david',topic_id:'lc-z-tests',rating:'green'};
+  const other={owner_id:'another-teacher',student_id:'david',topic_id:'lc-binomial',rating:'yellow'};
+  const {run,rows,values}=await cloudFixture({stored,rows:[remote,other],restored:true});
+  assert.equal(run('ratingsByStudent.get("david")["lc-integration"]'),'green');
+  assert.equal(run('ratingsByStudent.get("david")["lc-indices"]'),'red');
+  assert.equal(run('ratingsByStudent.get("david")["lc-binomial"]'),'green');
+  assert.equal(run('ratingsByStudent.get("david")["lc-z-tests"]'),'green');
+  assert.equal(run('ratingsByStudent.get("david")["lc-log-laws"]'),'grey');
+  assert.equal(run('ratingsByStudent.get("david")["not-a-topic"]'),undefined);
+  assert.equal(remote.rating,'green');
+  assert.equal(other.rating,'yellow');
+  assert.equal(values.get('plato-maths-school:teacher-test:david:v1'),JSON.stringify(stored['plato-maths-school:teacher-test:david:v1']));
+  const second=await cloudFixture({rows,owner:'another-teacher',stored:{...stored,'plato-maths-school:legacy-import-owner:v1':'teacher-test'}});
+  assert.equal(second.run('ratingsByStudent.get("david")["lc-integration"]'),'grey');
+  assert.equal(second.run('ratingsByStudent.get("david")["lc-log-laws"]'),'red');
+  assert.equal(second.run('ratingsByStudent.get("david")["lc-binomial"]'),'yellow');
+});
+
+test('David edits and grey resets survive offline queue, reload and a second device',async()=>{
+  const first=await cloudFixture();
+  first.context.navigator.onLine=false;
+  first.run('ratingsByStudent.get("david")["lc-integration"]="green"');
+  first.context.window.platoCloud.save('david','lc-integration','green');
+  const pendingKey='plato-maths-school:teacher-test:pending:v1';
+  assert.equal(Object.values(JSON.parse(first.values.get(pendingKey)))[0].rating,'green');
+  assert.match(first.elements.get('cloudStatus').textContent,/Offline/);
+  assert.equal(first.rows.find(r=>r.student_id==='david' && r.topic_id==='lc-integration').rating,'grey');
+  const stored=Object.fromEntries([...first.values].map(([key,value])=>[key,JSON.parse(value)]));
+  const reload=await cloudFixture({rows:first.rows,stored,restored:true});
+  for(let i=0;i<20 && JSON.parse(reload.values.get(pendingKey))['david/lc-integration'];i++) await new Promise(resolve=>setTimeout(resolve,5));
+  assert.equal(reload.rows.find(r=>r.student_id==='david' && r.topic_id==='lc-integration').rating,'green');
+  assert.equal(reload.run('ratingsByStudent.get("david")["lc-integration"]'),'green');
+  const second=await cloudFixture({rows:first.rows,restored:true});
+  assert.equal(second.run('ratingsByStudent.get("david")["lc-integration"]'),'green');
+  second.context.window.platoCloud.save('david','lc-integration','grey');
+  for(let i=0;i<20 && JSON.parse(second.values.get(pendingKey))['david/lc-integration'];i++) await new Promise(resolve=>setTimeout(resolve,5));
+  assert.equal(second.rows.find(r=>r.student_id==='david' && r.topic_id==='lc-integration').rating,'grey');
+  assert.equal(second.elements.get('cloudStatus').textContent,'Colours saved to your account.');
+  assert.ok([...reload.writes,...second.writes].every(row=>row.owner_id==='teacher-test' && row.student_id==='david'));
 });

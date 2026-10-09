@@ -29,7 +29,6 @@
   }
   function pendingCount(){return Object.keys(state.pending).length;}
   function currentMessage(){
-    if (!usesCloudRatings(activeStudent)) return 'David’s colours are saved on this device. Cloud setup is pending.';
     if (!state.ownerId) return 'Choose a colour. Sign in to sync between devices.';
     if (state.error) return `${state.error} Your changes are waiting to sync.`;
     if (state.loading) return 'Loading your cloud colours…';
@@ -37,7 +36,7 @@
     return 'Colours saved to your account.';
   }
   function updateStatus(){
-    el('cloudStatus').textContent = !usesCloudRatings(activeStudent) || state.ownerId ? currentMessage() : 'Colours are saved on this device. Sign in to sync.';
+    el('cloudStatus').textContent = state.ownerId ? currentMessage() : 'Colours are saved on this device. Sign in to sync.';
     el('accountButton').textContent = state.ownerId ? 'Teacher account' : 'Teacher sign in';
     el('cloudRetry').hidden = !state.ownerId || (!state.error && !pendingCount());
     el('cloudRetry').disabled = state.busy || state.loading && !state.error;
@@ -94,7 +93,14 @@
       const canImportGuest = !claimedBy || claimedBy === owner;
       const missing = [];
       cloudStudents.forEach(student => {
-        const seed = canImportGuest && guestSnapshot ? guestSnapshot[student.id] : defaultRatings(student);
+        const seed = {...(canImportGuest && guestSnapshot ? guestSnapshot[student.id] : defaultRatings(student))};
+        // David was device-only even when signed in; import only this owner's old key.
+        if (student.id === 'david'){
+          const deviceRatings = read(`plato-maths-school:${owner}:david:v1`,{});
+          topicsForStudent(student).forEach(([topic]) => {
+            if (validRatings.has(deviceRatings?.[topic])) seed[topic] = deviceRatings[topic];
+          });
+        }
         topicsForStudent(student).forEach(([topic]) => {
           if (!existing.has(`${student.id}/${topic}`)) missing.push({owner_id:owner,student_id:student.id,topic_id:topic,rating:validRatings.has(seed?.[topic]) ? seed[topic] : 'grey'});
         });

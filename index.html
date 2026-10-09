@@ -1811,7 +1811,7 @@ const STUDENTS = [
   {id:'aarav',name:'Aarav',exam:'Junior Cycle · Higher Level',year:'Third year'},
   {id:'priya',name:'Priya',exam:'Leaving Cert · Higher Level',year:'Fifth year'},
   {id:'rohan',name:'Rohan',exam:'Junior Cycle · Ordinary Level',year:'Third year'},
-  {id:'david',name:'David',exam:'Leaving Cert · Higher Level',year:'Leaving Certificate',cloud:false}
+  {id:'david',name:'David',exam:'Leaving Cert · Higher Level',year:'Leaving Certificate'}
 ];
 const STUDENT_ORDER_KEY = 'irish-maths-tutor:student-order:v1';
 const VLADIMIR_PRESET_VERSION = '90-green-rest-yellow:v2';
@@ -2048,7 +2048,7 @@ function setTopicRating(rating){
   if (window.platoCloud?.ownerId && usesCloudRatings(activeStudent)){
     window.platoCloud.save(activeStudent.id,selectedTopicId,rating);
   } else {
-    document.getElementById('ratingMessage').textContent = storageAvailable ? `${ratingLabel(rating)} · saved on this device. ${usesCloudRatings(activeStudent) ? 'Sign in to sync.' : 'Cloud setup is pending.'}` : `${ratingLabel(rating)} · browser storage is unavailable; this change lasts for this session.`;
+    document.getElementById('ratingMessage').textContent = storageAvailable ? `${ratingLabel(rating)} · saved on this device. Sign in to sync.` : `${ratingLabel(rating)} · browser storage is unavailable; this change lasts for this session.`;
   }
 }
 KNOWLEDGE_LEVELS.forEach(([rating,label]) => {
@@ -2094,6 +2094,6 @@ resizeBoard();
 render();
 </script>
 <script src="vendor/supabase.js" defer></script>
-<script src="cloud.js?v=lc-boards-v1" defer></script>
+<script src="cloud.js?v=david-cloud-v1" defer></script>
 </body>
 </html>

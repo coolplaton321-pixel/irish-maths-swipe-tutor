@@ -20,7 +20,7 @@ An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certifica
 - Jay's Junior Cycle Higher Level board with 48 topics across four strands
 - Topic descriptions and grey, red, yellow and green knowledge ratings
 - (HL) labels for topics containing Higher Level-only content, with the exact additions explained in each popup
-- Fifteen working student profiles, with Jay first and the others shuffled
+- Fifteen working student profiles, with David first, Jay second and the others shuffled
 - Mixed Junior Cycle and Leaving Cert exam labels, at Higher and Ordinary Level
 - Separate saved ratings per student and curriculum-specific boards
 - Leaving Certificate Higher Level board with 83 topics across all five syllabus strands; Ordinary Level boards omit HL-only rows
@@ -47,7 +47,7 @@ On first sign-in this browser's original student colours are imported into missi
 
 Edits appear immediately and save in order, with an account-scoped offline queue and a visible sync status/retry button. Saved colours refresh when the tab returns to the foreground and every 30 seconds. Failed saves remain queued, never labelled cloud-saved. Signing out is blocked while unsynced changes remain. Until sign-in, the existing device-only behaviour remains available. Clearing browser data removes unsynced/device-only colours, but signed-in cloud colours can be restored by signing in again.
 
-Jay keeps his original storage key. Junior Cycle demonstration profiles retain independently saved ratings. The shuffled directory order persists with Jay first. Leaving Cert profiles now use their own syllabus: Higher profiles have 83 rows; Ordinary profiles omit wholly HL-only rows and show shared content without HL additions. Old Junior Cycle ratings belonging to Leaving Cert-labelled profiles remain in their original local keys and cloud rows; they are not reinterpreted as Leaving Cert assessments. New Leaving Cert topics start grey.
+Jay keeps his original storage key. Junior Cycle demonstration profiles retain independently saved ratings. David appears first and Jay second; the remaining saved directory order is preserved. Leaving Cert profiles now use their own syllabus: Higher profiles have 83 rows; Ordinary profiles omit wholly HL-only rows and show shared content without HL additions. Old Junior Cycle ratings belonging to Leaving Cert-labelled profiles remain in their original local keys and cloud rows; they are not reinterpreted as Leaving Cert assessments. New Leaving Cert topics start grey.
 
 Vladimir's historical 90%-green preset is retained in his original Junior Cycle data. His Leaving Cert board starts unassessed like the other migrated Leaving Cert profiles; old colours are not transferred between unrelated curricula.
 

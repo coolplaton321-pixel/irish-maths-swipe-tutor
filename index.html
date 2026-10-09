@@ -1888,7 +1888,8 @@ function shuffled(items){
   return result;
 }
 function studentDirectoryOrder(){
-  const otherIds = STUDENTS.filter(student => student.id !== 'jay').map(student => student.id);
+  const firstIds = ['david','jay'];
+  const otherIds = STUDENTS.filter(student => !firstIds.includes(student.id)).map(student => student.id);
   let savedOrder = [];
   try {
     const saved = JSON.parse(localStorage.getItem(STUDENT_ORDER_KEY) || '[]');
@@ -1896,7 +1897,7 @@ function studentDirectoryOrder(){
   } catch (_) {}
   const order = [...savedOrder,...shuffled(otherIds.filter(id => !savedOrder.includes(id)))];
   try {localStorage.setItem(STUDENT_ORDER_KEY,JSON.stringify(order));} catch (_) {}
-  return ['jay',...order].map(id => STUDENTS.find(student => student.id === id));
+  return [...firstIds,...order].map(id => STUDENTS.find(student => student.id === id));
 }
 
 const menuToggle = document.getElementById('menuToggle');

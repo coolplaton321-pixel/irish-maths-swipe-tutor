@@ -56,10 +56,24 @@ test('David starts unassessed; old JC colours and order are preserved',()=>{
   assert.equal(run('Object.keys(loadStudentRatings(STUDENTS.find(s=>s.id==="david"))).length'),0);
   assert.equal(run('Object.keys(loadStudentRatings(STUDENTS.find(s=>s.id==="aoife"))).length'),0);
   assert.equal(values.get('irish-maths-tutor:aoife:jc-higher:v1'),'{"indices":"green"}');
-  assert.equal(run('studentDirectoryOrder().map(s=>s.id).slice(0,3).join(",")'),'jay,aoife,liam');
+  assert.equal(run('studentDirectoryOrder().map(s=>s.id).slice(0,4).join(",")'),'david,jay,aoife,liam');
   assert.equal(run('studentDirectoryOrder().filter(s=>s.id==="david").length'),1);
   assert.ok(run('usesCloudRatings(STUDENTS[0])'));
   assert.ok(run('usesCloudRatings(STUDENTS.find(s=>s.id==="david"))'));
+});
+
+test('David precedes Jay on fresh devices, existing saved orders and reloads',()=>{
+  const {run,values}=fixture();
+  assert.equal(run('studentDirectoryOrder().slice(0,2).map(s=>s.id).join(",")'),'david,jay');
+  values.set('irish-maths-tutor:student-order:v1',JSON.stringify(['aoife','david','liam','david','jay','unknown','niamh']));
+  const ordered=run('studentDirectoryOrder().map(s=>s.id).join(",")');
+  assert.ok(ordered.startsWith('david,jay,aoife,liam,niamh,'));
+  assert.equal(run('new Set(studentDirectoryOrder().map(s=>s.id)).size'),15);
+  assert.equal(run('studentDirectoryOrder().length'),15);
+  assert.equal(run('studentDirectoryOrder().map(s=>s.id).join(",")'),ordered);
+  const reload=fixture();
+  reload.values.set('irish-maths-tutor:student-order:v1',values.get('irish-maths-tutor:student-order:v1'));
+  assert.equal(reload.run('studentDirectoryOrder().map(s=>s.id).join(",")'),ordered);
 });
 
 test('David keeps guest ratings separate from signed-in cloud state',()=>{

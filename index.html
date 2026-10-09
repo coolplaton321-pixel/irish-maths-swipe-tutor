@@ -423,6 +423,8 @@
   .topic-dot[data-rating="yellow"]{background:#D9A829;box-shadow:0 0 0 3px rgba(217,168,41,.13)}
   .topic-dot[data-rating="green"]{background:#2E8B77;box-shadow:0 0 0 3px rgba(46,139,119,.1)}
   .topic-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:start}
+  .topic-board[data-curriculum="leaving"]{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .topic-column,.topic-row>span{min-width:0;overflow-wrap:anywhere}
   .topic-column{border:1px solid rgba(255,255,255,.9);border-radius:20px;background:rgba(255,255,255,.94);overflow:hidden;box-shadow:0 8px 28px rgba(34,48,63,.07)}
   .topic-column header{padding:22px 20px 18px;min-height:118px;border-bottom:1px solid #E9EDF0;border-top:4px solid var(--strand-color)}
   .topic-column header small{font:700 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--strand-color)}
@@ -459,8 +461,9 @@
   .rating-option:disabled{opacity:.55;cursor:wait}
   .cloud-panel button:focus-visible,.account-form input:focus-visible,.account-secondary:focus-visible{outline:3px solid #2F6F8F;outline-offset:3px}
   :is(.menu-toggle,.menu-panel button,.student-card,.back-students,.topic-row,.rating-option,.dialog-close,.dialog-save):focus-visible{outline:3px solid #2F6F8F;outline-offset:3px}
-  @media(max-width:1000px){.topic-board{grid-template-columns:repeat(2,minmax(0,1fr))}.student-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
-  @media(max-width:600px){.students-view{padding:90px 16px 24px}.student-heading{align-items:flex-start;flex-direction:column}.progress-summary{width:100%;justify-content:space-between}.student-list,.topic-board{grid-template-columns:1fr}.topic-column header{min-height:0}.app-menu{left:12px;top:12px}.grinds-view .modes{margin-top:72px}.topic-dialog{padding:24px}.student-card{padding:20px}}
+  @media(max-width:1150px){.topic-board[data-curriculum="leaving"]{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media(max-width:1000px){.topic-board,.topic-board[data-curriculum="leaving"]{grid-template-columns:repeat(2,minmax(0,1fr))}.student-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:600px){.students-view{padding:90px 16px 24px}.student-heading{align-items:flex-start;flex-direction:column}.progress-summary{width:100%;justify-content:space-between}.student-list,.topic-board,.topic-board[data-curriculum="leaving"]{grid-template-columns:1fr}.topic-column header{min-height:0}.app-menu{left:12px;top:12px}.grinds-view .modes{margin-top:72px}.topic-dialog{padding:24px}.student-card{padding:20px}}
 </style>
 </head>
 <body>
@@ -537,7 +540,7 @@
       <div class="progress-summary" aria-label="Topic progress" aria-live="polite"><div><strong id="topicTotal">0</strong><span>Topics</span></div><div><strong id="topicAssessed">0</strong><span>Assessed</span></div><div><strong id="topicConfident">0</strong><span>Confident</span></div></div>
     </div>
     <div class="topic-board" id="topicBoard"></div>
-    <p class="curriculum-note">(HL) means the topic includes Higher Level-only content; open it to see which parts. Unmarked topics are shared with Ordinary Level. Topic checklist based on the <a href="https://www.curriculumonline.ie/junior-cycle/junior-cycle-subjects/mathematics/expectations-for-students/" target="_blank" rel="noopener">NCCA Junior Cycle Mathematics learning outcomes</a>. Basic arithmetic is assumed; reasoning, explaining methods and checking answers are practised across every topic.</p>
+    <p class="curriculum-note" id="curriculumNote">(HL) means the topic includes Higher Level-only content; open it to see which parts. Unmarked topics are shared with Ordinary Level. Topic checklist based on the <a href="https://www.curriculumonline.ie/junior-cycle/junior-cycle-subjects/mathematics/expectations-for-students/" target="_blank" rel="noopener">NCCA Junior Cycle Mathematics learning outcomes</a>. Basic arithmetic is assumed; reasoning, explaining methods and checking answers are practised across every topic.</p>
   </div>
 </section>
 
@@ -546,6 +549,7 @@
   <p class="page-eyebrow" id="dialogStrand"></p><h2 id="dialogTitle"></h2>
   <p class="topic-description" id="dialogDescription"></p>
   <p class="topic-description" id="dialogHigherContent" hidden></p>
+  <p class="curriculum-note" id="dialogSource" hidden></p>
   <h3 id="knowledgeHeading">Jay’s knowledge level</h3>
   <div class="rating-options" id="ratingOptions" role="radiogroup" aria-label="Knowledge level"></div>
   <p class="storage-message" id="ratingMessage" role="status">Choose a colour to update this topic.</p>
@@ -574,6 +578,7 @@
 
 <footer>Plato Maths School</footer>
 
+<script src="leaving-curriculum.js"></script>
 <script>
 /* ------------------------------------------------------------------
    QUESTION BANK
@@ -1805,7 +1810,8 @@ const STUDENTS = [
   {id:'masha',name:'Masha',exam:'Leaving Cert · Ordinary Level',year:'Sixth year'},
   {id:'aarav',name:'Aarav',exam:'Junior Cycle · Higher Level',year:'Third year'},
   {id:'priya',name:'Priya',exam:'Leaving Cert · Higher Level',year:'Fifth year'},
-  {id:'rohan',name:'Rohan',exam:'Junior Cycle · Ordinary Level',year:'Third year'}
+  {id:'rohan',name:'Rohan',exam:'Junior Cycle · Ordinary Level',year:'Third year'},
+  {id:'david',name:'David',exam:'Leaving Cert · Higher Level',year:'Leaving Certificate',cloud:false}
 ];
 const STUDENT_ORDER_KEY = 'irish-maths-tutor:student-order:v1';
 const VLADIMIR_PRESET_VERSION = '90-green-rest-yellow:v2';
@@ -1814,14 +1820,25 @@ let activeStudent = STUDENTS[0];
 let studentRatings = {};
 let storageAvailable = true;
 
+function curriculumFor(student){
+  return student.exam.startsWith('Leaving Cert') ? 'leaving' : 'junior';
+}
+function strandsForStudent(student){
+  if (curriculumFor(student) !== 'leaving') return JUNIOR_HIGHER_STRANDS;
+  if (!student.exam.includes('Ordinary Level')) return LEAVING_CERT_STRANDS;
+  return LEAVING_CERT_STRANDS.map(strand => ({...strand,topics:strand.topics.filter(topic => !topic[3]?.only)}));
+}
+function topicsForStudent(student){return strandsForStudent(student).flatMap(strand => strand.topics);}
+function usesCloudRatings(student){return student.cloud !== false;}
+
 function studentRatingsKey(student){
   if (window.platoCloud?.ownerId) return `plato-maths-school:${window.platoCloud.ownerId}:${student.id}:v1`;
   // Jay's original key is unchanged, so his existing ratings are preserved.
-  return `irish-maths-tutor:${student.id}:jc-higher:v1`;
+  return `irish-maths-tutor:${student.id}:${curriculumFor(student) === 'leaving' ? 'lc' : 'jc-higher'}:v1`;
 }
 function loadStudentRatings(student){
   if (ratingsByStudent.has(student.id)) return ratingsByStudent.get(student.id);
-  if (window.platoCloud?.ownerId){
+  if (window.platoCloud?.ownerId && usesCloudRatings(student)){
     const ratings = {};
     ratingsByStudent.set(student.id,ratings);
     return ratings;
@@ -1832,7 +1849,7 @@ function loadStudentRatings(student){
     const raw = localStorage.getItem(studentRatingsKey(student));
     if (raw !== null) saved = JSON.parse(raw);
   } catch (_) {storageAvailable = false;}
-  if (student.id === 'vladimir' && (!saved || saved.__presetVersion !== VLADIMIR_PRESET_VERSION)){
+  if (curriculumFor(student) === 'junior' && student.id === 'vladimir' && (!saved || saved.__presetVersion !== VLADIMIR_PRESET_VERSION)){
     // Apply the requested profile once, including over the older random ratings.
     const topics = shuffled(JUNIOR_HIGHER_STRANDS.flatMap(strand => strand.topics));
     const greenCount = Math.round(topics.length * 0.9);
@@ -1846,11 +1863,11 @@ function loadStudentRatings(student){
     try {localStorage.setItem(studentRatingsKey(student),JSON.stringify(ratings));}
     catch (_) {storageAvailable = false;}
   } else if (saved && typeof saved === 'object' && !Array.isArray(saved)){
-    JUNIOR_HIGHER_STRANDS.forEach(strand => strand.topics.forEach(([id]) => {
+    topicsForStudent(student).forEach(([id]) => {
       if (KNOWLEDGE_LEVELS.some(([rating]) => rating === saved[id])) ratings[id] = saved[id];
-    }));
+    });
     if (student.id === 'vladimir') ratings.__presetVersion = VLADIMIR_PRESET_VERSION;
-  } else if (student.id !== 'jay'){
+  } else if (student.id !== 'jay' && curriculumFor(student) === 'junior'){
     // Sample profiles get random demo ratings once, then retain user changes.
     const sampleLevels = shuffled(KNOWLEDGE_LEVELS.map(([rating]) => rating));
     JUNIOR_HIGHER_STRANDS.flatMap(strand => strand.topics).forEach(([id],index) => {
@@ -1917,7 +1934,9 @@ function showAppView(){
     document.getElementById('studentYear').textContent = student.year;
     document.getElementById('studentExam').textContent = student.exam;
     document.getElementById('knowledgeHeading').textContent = `${student.name}’s knowledge level`;
+    renderTopicBoard(student);
     updateTopicBoard();
+    window.platoCloud?.updateStatus();
   }
   document.getElementById('grindsView').hidden = studentsActive;
   document.getElementById('studentsView').hidden = !studentsActive;
@@ -1964,13 +1983,23 @@ function updateTopicBoard(){
   document.getElementById('topicConfident').textContent = confident;
 }
 
-JUNIOR_HIGHER_STRANDS.forEach((strand,index) => {
+const juniorCurriculumNote = document.getElementById('curriculumNote').innerHTML;
+function renderTopicBoard(student){
+  const leaving = curriculumFor(student) === 'leaving';
+  const ordinary = leaving && student.exam.includes('Ordinary Level');
+  const board = document.getElementById('topicBoard');
+  board.replaceChildren();
+  board.dataset.curriculum = leaving ? 'leaving' : 'junior';
+  document.getElementById('curriculumNote').innerHTML = leaving
+    ? `${ordinary ? 'Ordinary Level topics; Higher Level-only rows are omitted.' : '(HL) identifies a Higher Level-only topic or a shared topic with Higher Level additions.'} Based on the <a href="${LEAVING_CERT_SOURCE}" target="_blank" rel="noopener">current NCCA Leaving Certificate Mathematics syllabus</a>, sections 1.1-5.2 and the geometry/trigonometry appendices. Junior Cycle prerequisites are assumed; reasoning, modelling and problem solving apply throughout. Foundation Level is a separate course. The 2026 consultation draft is not used.`
+    : juniorCurriculumNote;
+  strandsForStudent(student).forEach((strand,index) => {
   const section = document.createElement('section');
   section.className = 'topic-column';
   section.style.setProperty('--strand-color',strand.color);
   section.innerHTML = `<header><small>${String(index + 1).padStart(2,'0')} / ${strand.topics.length} topics</small><h2>${strand.title}</h2></header><div class="topic-list"></div>`;
-  strand.topics.forEach(([id,title,description]) => {
-    const higher = HIGHER_CONTENT[id];
+  strand.topics.forEach(([id,title,description,,reference]) => {
+    const higher = ordinary ? null : (leaving ? LEAVING_HIGHER_CONTENT : HIGHER_CONTENT)[id];
     const displayTitle = title + (higher ? ' (HL)' : '');
     const button = document.createElement('button');
     button.type = 'button';
@@ -1988,34 +2017,38 @@ JUNIOR_HIGHER_STRANDS.forEach((strand,index) => {
       const higherDescription = document.getElementById('dialogHigherContent');
       higherDescription.hidden = !higher;
       higherDescription.textContent = higher ? `${higher.only ? 'Higher Level-only topic' : 'Shared topic — Higher Level additions'}: ${higher.detail}` : '';
+      const source = document.getElementById('dialogSource');
+      source.hidden = !leaving;
+      source.innerHTML = leaving ? `<a href="${LEAVING_CERT_SOURCE}" target="_blank" rel="noopener">NCCA syllabus: ${reference}</a>` : '';
       document.getElementById('ratingMessage').textContent = window.platoCloud?.topicMessage() || 'Choose a colour to update this topic.';
       syncRatingOptions();
       topicDialog.showModal();
     };
     section.querySelector('.topic-list').appendChild(button);
   });
-  document.getElementById('topicBoard').appendChild(section);
-});
+  board.appendChild(section);
+  });
+}
 
 function syncRatingOptions(){
   document.querySelectorAll('.rating-option').forEach(button => {
     const checked = button.dataset.rating === ratingFor(selectedTopicId);
     button.setAttribute('aria-checked',String(checked));
     button.tabIndex = checked ? 0 : -1;
-    button.disabled = Boolean(window.platoCloud?.loading);
+    button.disabled = Boolean(window.platoCloud?.loading && usesCloudRatings(activeStudent));
   });
 }
 function setTopicRating(rating){
-  if (!selectedTopicId || window.platoCloud?.loading) return;
+  if (!selectedTopicId || (window.platoCloud?.loading && usesCloudRatings(activeStudent))) return;
   studentRatings[selectedTopicId] = rating;
   try {localStorage.setItem(studentRatingsKey(activeStudent),JSON.stringify(studentRatings));storageAvailable = true;}
   catch (_) {storageAvailable = false;}
   syncRatingOptions();
   updateTopicBoard();
-  if (window.platoCloud?.ownerId){
+  if (window.platoCloud?.ownerId && usesCloudRatings(activeStudent)){
     window.platoCloud.save(activeStudent.id,selectedTopicId,rating);
   } else {
-    document.getElementById('ratingMessage').textContent = storageAvailable ? `${ratingLabel(rating)} · saved on this device. Sign in to sync.` : `${ratingLabel(rating)} · browser storage is unavailable; this change lasts for this session.`;
+    document.getElementById('ratingMessage').textContent = storageAvailable ? `${ratingLabel(rating)} · saved on this device. ${usesCloudRatings(activeStudent) ? 'Sign in to sync.' : 'Cloud setup is pending.'}` : `${ratingLabel(rating)} · browser storage is unavailable; this change lasts for this session.`;
   }
 }
 KNOWLEDGE_LEVELS.forEach(([rating,label]) => {

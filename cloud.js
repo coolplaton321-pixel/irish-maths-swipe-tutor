@@ -4,8 +4,9 @@
   const PROJECT_URL = 'https://iljziesnhngxpbcrjvww.supabase.co';
   const PUBLISHABLE_KEY = 'sb_publishable_65bqQ6CDWHdJcRps4yy-ag_fBqnGg0H';
   const TABLE = 'student_topic_ratings';
-  const topicIds = JUNIOR_HIGHER_STRANDS.flatMap(strand => strand.topics.map(([id]) => id));
-  const studentIds = new Set(STUDENTS.map(student => student.id));
+  const topicIds = [...JUNIOR_HIGHER_STRANDS,...LEAVING_CERT_STRANDS].flatMap(strand => strand.topics.map(([id]) => id));
+  const cloudStudents = STUDENTS.filter(usesCloudRatings);
+  const studentIds = new Set(cloudStudents.map(student => student.id));
   const validRatings = new Set(KNOWLEDGE_LEVELS.map(([rating]) => rating));
   const el = id => document.getElementById(id);
   const state = {ownerId:null,loading:false,ready:false,pending:{},epoch:0,busy:false,error:'',user:null};
@@ -28,6 +29,7 @@
   }
   function pendingCount(){return Object.keys(state.pending).length;}
   function currentMessage(){
+    if (!usesCloudRatings(activeStudent)) return 'David’s colours are saved on this device. Cloud setup is pending.';
     if (!state.ownerId) return 'Choose a colour. Sign in to sync between devices.';
     if (state.error) return `${state.error} Your changes are waiting to sync.`;
     if (state.loading) return 'Loading your cloud colours…';
@@ -35,7 +37,7 @@
     return 'Colours saved to your account.';
   }
   function updateStatus(){
-    el('cloudStatus').textContent = state.ownerId ? currentMessage() : 'Colours are saved on this device. Sign in to sync.';
+    el('cloudStatus').textContent = !usesCloudRatings(activeStudent) || state.ownerId ? currentMessage() : 'Colours are saved on this device. Sign in to sync.';
     el('accountButton').textContent = state.ownerId ? 'Teacher account' : 'Teacher sign in';
     el('cloudRetry').hidden = !state.ownerId || (!state.error && !pendingCount());
     el('cloudRetry').disabled = state.busy || state.loading && !state.error;
@@ -48,13 +50,13 @@
     syncRatingOptions();
   }
   function cache(){
-    const values = Object.fromEntries(STUDENTS.map(student => [student.id,{...ratingsByStudent.get(student.id)}]));
+    const values = Object.fromEntries(cloudStudents.map(student => [student.id,{...ratingsByStudent.get(student.id)}]));
     write(cacheKey(),values);
     write(queueKey(),state.pending);
   }
   function installRows(rows){
     ratingsByStudent.clear();
-    STUDENTS.forEach(student => ratingsByStudent.set(student.id,{}));
+    cloudStudents.forEach(student => ratingsByStudent.set(student.id,{}));
     rows.filter(validRow).forEach(row => {ratingsByStudent.get(row.student_id)[row.topic_id] = row.rating;});
     Object.values(state.pending).filter(validRow).forEach(row => {ratingsByStudent.get(row.student_id)[row.topic_id] = row.rating;});
     refreshBoard();
@@ -62,19 +64,25 @@
   }
   function defaultRatings(student){
     const ratings = {};
-    topicIds.forEach((id,index) => {
-      ratings[id] = student.id === 'jay' ? 'grey' : student.id === 'vladimir' ? (index < 43 ? 'green' : 'yellow') : KNOWLEDGE_LEVELS[Math.floor(Math.random()*4)][0];
+    topicsForStudent(student).forEach(([id]) => {
+      ratings[id] = student.id === 'jay' || curriculumFor(student) === 'leaving' ? 'grey' : KNOWLEDGE_LEVELS[Math.floor(Math.random()*4)][0];
     });
     return ratings;
   }
   function snapshotGuest(){
     // Preserve original browser keys, including Jay's and Vladimir's one-time preset.
-    return Object.fromEntries(STUDENTS.map(student => [student.id,{...loadStudentRatings(student)}]));
+    return Object.fromEntries(cloudStudents.map(student => [student.id,{...loadStudentRatings(student)}]));
   }
   async function fetchRows(owner){
-    const {data,error} = await client.from(TABLE).select('student_id,topic_id,rating').eq('owner_id',owner);
-    if (error) throw error;
-    return data || [];
+    const rows = [];
+    const pageSize = 500;
+    for (let offset = 0; ; offset += pageSize){
+      const {data,error} = await client.from(TABLE).select('student_id,topic_id,rating')
+        .eq('owner_id',owner).order('student_id').order('topic_id').range(offset,offset + pageSize - 1);
+      if (error) throw error;
+      rows.push(...(data || []));
+      if (!data || data.length < pageSize) return rows;
+    }
   }
   async function initialiseOwner(epoch){
     const owner = state.ownerId;
@@ -85,9 +93,9 @@
       const claimedBy = read('plato-maths-school:legacy-import-owner:v1',null);
       const canImportGuest = !claimedBy || claimedBy === owner;
       const missing = [];
-      STUDENTS.forEach(student => {
+      cloudStudents.forEach(student => {
         const seed = canImportGuest && guestSnapshot ? guestSnapshot[student.id] : defaultRatings(student);
-        topicIds.forEach(topic => {
+        topicsForStudent(student).forEach(([topic]) => {
           if (!existing.has(`${student.id}/${topic}`)) missing.push({owner_id:owner,student_id:student.id,topic_id:topic,rating:validRatings.has(seed?.[topic]) ? seed[topic] : 'grey'});
         });
       });
@@ -137,7 +145,7 @@
         state.pending[`${item.student_id}/${item.topic_id}`] = item;
       });
       const savedCache = read(cacheKey(),{});
-      STUDENTS.forEach(student => {
+      cloudStudents.forEach(student => {
         const ratings = {};
         topicIds.forEach(id => {if(validRatings.has(savedCache[student.id]?.[id])) ratings[id]=savedCache[student.id][id];});
         ratingsByStudent.set(student.id,ratings);
@@ -199,6 +207,7 @@
     get ownerId(){return state.ownerId;},
     get loading(){return state.loading;},
     save,
+    updateStatus,
     topicMessage:currentMessage
   };
 
@@ -283,6 +292,7 @@
   window.addEventListener('focus',() => {void refreshCloud();});
   window.addEventListener('beforeunload',event => {if(pendingCount()){event.preventDefault();event.returnValue='';}});
   setInterval(() => {void refreshCloud();},30000);
+  updateStatus();
   try {
     if (!window.supabase) throw new Error('The sign-in service could not load. Refresh the page.');
     client = window.supabase.createClient(PROJECT_URL,PUBLISHABLE_KEY,{db:{timeout:15000,retry:false},auth:{storageKey:'plato-maths-school:auth:v1',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});

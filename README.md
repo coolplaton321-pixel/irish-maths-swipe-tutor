@@ -20,10 +20,13 @@ An iPad-friendly maths revision app for Irish Junior Cycle and Leaving Certifica
 - Jay's Junior Cycle Higher Level board with 48 topics across four strands
 - Topic descriptions and grey, red, yellow and green knowledge ratings
 - (HL) labels for topics containing Higher Level-only content, with the exact additions explained in each popup
-- Fourteen working student profiles, with Jay first and the others shuffled
+- Fifteen working student profiles, with Jay first and the others shuffled
 - Mixed Junior Cycle and Leaving Cert exam labels, at Higher and Ordinary Level
-- Separate saved ratings per student; all profiles currently use the Junior Cycle Higher Level board
-- Random initial ratings for other students, with Vladimir set to 43 of 48 topics green (89.6%) and the remaining five yellow; Jay's ratings are preserved
+- Separate saved ratings per student and curriculum-specific boards
+- Leaving Certificate Higher Level board with 83 topics across all five syllabus strands; Ordinary Level boards omit HL-only rows
+- Precise Leaving Cert (HL) distinctions, topic descriptions and syllabus-section links
+- David's new Leaving Cert Higher Level profile, initially unassessed
+- Junior Cycle demonstration ratings and Jay's saved colours are preserved
 - Responsive landscape and portrait layouts
 
 The application is a static website served with GitHub Pages at https://coolplaton321-pixel.github.io/plato-maths-school/. Run `npm ci` and `npm run build` to regenerate the committed, locally served Supabase browser client. Package versions and the lockfile are pinned; no external JavaScript CDN is used.
@@ -44,10 +47,16 @@ On first sign-in this browser's original student colours are imported into missi
 
 Edits appear immediately and save in order, with an account-scoped offline queue and a visible sync status/retry button. Saved colours refresh when the tab returns to the foreground and every 30 seconds. Failed saves remain queued, never labelled cloud-saved. Signing out is blocked while unsynced changes remain. Until sign-in, the existing device-only behaviour remains available. Clearing browser data removes unsynced/device-only colours, but signed-in cloud colours can be restored by signing in again.
 
-Jay keeps his original storage key. Other profiles start with random ratings generated on first opening and saved independently for each student. The shuffled directory order also persists in the browser, with Jay always pinned first. These demonstration profiles can be edited without changing Jay's ratings. Exam and year labels vary by student; this is a presentation-only change, and all topic boards still use the existing Junior Cycle Higher checklist, not exam-specific curricula.
+Jay keeps his original storage key. Junior Cycle demonstration profiles retain independently saved ratings. The shuffled directory order persists with Jay first. Leaving Cert profiles now use their own syllabus: Higher profiles have 83 rows; Ordinary profiles omit wholly HL-only rows and show shared content without HL additions. Old Junior Cycle ratings belonging to Leaving Cert-labelled profiles remain in their original local keys and cloud rows; they are not reinterpreted as Leaving Cert assessments. New Leaving Cert topics start grey.
 
-Vladimir's 90%-green preset replaces his older random ratings once per browser. The updated preset preserves the 43 green topics from the previous version and makes the other five yellow. A saved preset version keeps subsequent manual edits intact on refresh; all other students' ratings are unchanged.
+Vladimir's historical 90%-green preset is retained in his original Junior Cycle data. His Leaving Cert board starts unassessed like the other migrated Leaving Cert profiles; old colours are not transferred between unrelated curricula.
 
 The topic checklist follows the [NCCA Junior Cycle Mathematics learning outcomes](https://www.curriculumonline.ie/junior-cycle/junior-cycle-subjects/mathematics/expectations-for-students/), including Higher Level content. Basic arithmetic is assumed. Reasoning, communication and problem solving are practised across the checklist rather than treated as a separate content column.
 
 The (HL) labels follow the bold additions on pages 15–20 of the NCCA specification. A label means the topic contains Higher Level-only content, not necessarily that the entire topic is absent from Ordinary Level. The popup distinguishes a wholly Higher Level topic from a shared topic with Higher Level additions. Stable topic IDs preserve previously saved ratings when a label or title changes.
+
+## Leaving Certificate Boards
+
+The Leaving Cert checklist uses the current [NCCA Mathematics syllabus for examinations from 2015](https://www.curriculumonline.ie/getmedia/f6f2e822-2b0c-461e-bcd4-dfcde6decc0c/SCSEC25_Maths_syllabus_examination-2015_English.pdf), not the 2026 consultation draft. See [the coverage audit](docs/leaving-cert-curriculum.md). Foundation Level is a separate course, not an OL/HL subset offered by these boards. `leaving-curriculum.js` holds the content and stable `lc-` identifiers; the existing rendering and rating controls are reused. Run `npm test` for syntax, coverage, level boundaries, storage isolation and cloud-pagination regression tests.
+
+David appears at `#students/david` with all topics grey. His colours currently remain device-local (including separate local keys per signed-in teacher), because the deployed database's student-ID constraint does not yet include David. `cloud:false` deliberately excludes him from cloud initialisation so existing teachers' sync cannot fail. Database execution was unavailable in the implementing session. To enable his sync, extend only `student_topic_ratings_student_id_check` in project `iljziesnhngxpbcrjvww` to allow `david`, retaining all existing IDs and RLS policies, then remove `cloud:false` from his profile. Do not change the other Supabase project. Existing student colours are paginated in batches of 500 to preserve results above the REST row limit.
